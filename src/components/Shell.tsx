@@ -14,20 +14,20 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <AppShell
-      header={{ height: 60 }}
+      header={{ height: {base: 60, xl: 100} }}
       navbar={{
         width: 300,
-        breakpoint: "sm",
+        breakpoint: "md",
         collapsed: { desktop: true, mobile: !opened },
       }}
       padding="md"
     >
       <AppShell.Header>
         <Group h="100%" px="md">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+          <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" />
           <Group justify="space-between" style={{ flex: 1 }}>
             <Image src={"/Logo.png"} />
-            <Flex ml="xl" gap={0} visibleFrom="sm">
+            <Flex ml="xl" gap={0} visibleFrom="md">
               {navItems.map(({ name, href }, index) => (
                 <NavLink
                   styles={{ label: { fontSize: "1rem" } }}
@@ -40,7 +40,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 />
               ))}
             </Flex>
-            <Flex justify={"space-between"} gap={"lg"}>
+            <Flex justify={"space-between"} gap={"lg"} visibleFrom="md">
               <ActionIcon variant="subtle">
                 <IconVolumeOff />
               </ActionIcon>

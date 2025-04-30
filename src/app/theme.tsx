@@ -95,7 +95,7 @@ export const theme = createTheme({
             "#434b57", //border
             "#4680d9",
             "#1baded1a", //hover bg
-            "#2e67c0",
+            "#030E1BE5",
             "#255bac",
             "#0E3465",
         ],
@@ -136,6 +136,12 @@ export const theme = createTheme({
           defaultProps: {
             fz: { xl: "var(--xl-font-size)" },
           },
+        },
+        Card: {
+          defaultProps:{
+            bg: "dark.7",
+            withBorder: true
+          }
         },
         InputLabel: {
           defaultProps: {
