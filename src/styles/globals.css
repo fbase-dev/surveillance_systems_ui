@@ -84,8 +84,14 @@ body {
   cursor: grab;
 }
 
+/* active nav link */
 .adminNavLink:where([data-active], [aria-current="page"]) {
   border-bottom: 3px solid var(--mantine-color-deep-blue-6);
   color: var(--mantine-color-deep-blue-6);
   background-color: transparent;
+}
+
+/* active tab */
+.m_539e827b:where([data-active]) {
+  color: var(--tabs-color);
 }

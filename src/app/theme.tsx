@@ -154,13 +154,6 @@ export const theme = createTheme({
             radius: "sm",
           },
         },
-        Tabs: {
-          defaultProps: {
-            style: {
-              "--tab-border-color": "#434B57",
-            },
-          },
-        },
         ScrollArea: {
           defaultProps: {
             scrollbarSize: 5,

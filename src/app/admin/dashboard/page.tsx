@@ -1,3 +1,4 @@
+"use client"
 import CamCard from "@/components/Dashboard/CamCard";
 import DetailsCard from "@/components/Dashboard/DetailsCard";
 import FrequencyCard from "@/components/Dashboard/FrequencyCard";
