@@ -4,9 +4,10 @@ import DetailsCard from "@/components/Dashboard/DetailsCard";
 import FrequencyCard from "@/components/Dashboard/FrequencyCard";
 import HeroSection from "@/components/Dashboard/HeroSection";
 import MapCard from "@/components/Dashboard/MapCard";
-import { Grid, GridCol, SimpleGrid, Stack, Text } from "@mantine/core";
+import { Grid, GridCol, SimpleGrid, Stack } from "@mantine/core";
 
 export default function Dashboard(){
+    
     return(
         <Grid>
             <GridCol span={8}>
