@@ -1,10 +1,10 @@
-import { ais_api } from '../api';
+import axios from 'axios';
 import { ais_endpoints } from '../endpoints';
 
-export const getOwnAisData = () => ais_api.get(ais_endpoints.own_vessels);
+export const getOwnAisData = () => axios.get(`/api/ais?path=${ais_endpoints.own_vessels}`);
 
-export const getOtherAisData = () => ais_api.get(ais_endpoints.other_vessels);
+export const getOtherAisData = () => axios.get(`/api/ais?path=${ais_endpoints.other_vessels}`);
 
-export const getTargetLocation = () => ais_api.get(ais_endpoints.target_location);
+export const getTargetLocation = () => axios.get(`/api/ais?path=${ais_endpoints.target_location}`);
 
-export const getTrackingData = () => ais_api.get(ais_endpoints.tracking_data);
+export const getTrackingData = () => axios.get(`/api/ais?path=${ais_endpoints.tracking_data}`);

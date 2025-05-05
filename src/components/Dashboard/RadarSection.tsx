@@ -1,6 +1,8 @@
 import { Stack, Flex, Text } from "@mantine/core";
-import { useState, useEffect, ReactNode } from "react";
+import { ReactNode } from "react";
 import ShipRadar from "./ShipRadar";
+import { useOwnVesselsAis } from "@/app/hooks/useOwnVesselsAis";
+import DmsCoordinates from "dms-conversion";
 
 type MetricProps = {
   title: string;
@@ -12,21 +14,29 @@ export function Metric({ title, value, textAlign = "left" }: MetricProps) {
   return (
     <Stack gap="0">
       <Text c="deep-blue.6">{title}</Text>
-      {typeof value === "string" ? <Text fz={"xs"} ta={textAlign}>{value}</Text> : value}
+      {typeof value === "string" ? (
+        <Text fz={"xs"} ta={textAlign}>
+          {value}
+        </Text>
+      ) : (
+        value
+      )}
     </Stack>
   );
 }
 
 export default function () {
-  const [heading, setHeading] = useState(0);
+  const { aisData } = useOwnVesselsAis();
 
-  useEffect(() => {
-    // Simulate heading changes
-    const interval = setInterval(() => {
-      setHeading((prev) => (prev + 5) % 360);
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
+  const aisDms = new DmsCoordinates(
+    Number(aisData?.lat || 0),
+    Number(aisData?.lon || 0)
+  );
+  var longDms = aisDms.longitude.toString(0);
+  var latDms = aisDms.latitude.toString(0);
+
+  const heading = aisData?.heading||0
+
   return (
     <Flex justify={"center"} align={"center"} pos={"relative"} p={"lg"}>
       <Flex
@@ -36,16 +46,13 @@ export default function () {
         top={0}
         left={0}
       >
-        <Metric title={"Speed"} value="12.8kts" />
+        <Metric title={"Speed"} value={`${aisData?.speed||"--- ---"} kn`} />
         <Metric title={"Orientation"} value="NE" textAlign="right" />
       </Flex>
       <ShipRadar
         heading={heading}
-        speed={12.8}
-        orientation="NE"
-        coordinates="4.4941° N, 7.5149° E"
         markers={[
-          { x: 50, y: 80, color: "limegreen" },
+          { x: 90, y: 90, color: "#ffffff" },
           { x: 150, y: 60, color: "yellow" },
         ]}
       />
@@ -60,8 +67,8 @@ export default function () {
           title={"Coordinates"}
           value={
             <Stack gap={0}>
-              <Text fz={"xs"}>23°26'13.7'' N</Text>
-              <Text fz={"xs"}>23°26'13.7'' S</Text>
+              <Text fz={"xs"}>{latDms}</Text>
+              <Text fz={"xs"}>{longDms}</Text>
             </Stack>
           }
         />

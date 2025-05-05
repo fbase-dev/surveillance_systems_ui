@@ -1,10 +1,17 @@
 export const ais_endpoints = {
-  other_vessels: "/other",
-  own_vessels: "/own",
-  target_location: "/target_location",
-  tracking_data: "tracking_data",
+  other_vessels: "/ais_data/other",
+  own_vessels: "/ais_data/own",
+  target_location: "/target_location_batch",
+  tracking_data: "/tracking_data",
 };
 
-export const stream_endpoints ={
-  stream: "/av_stream"
+export const camera_control_endpoints = {
+  stream: "/video_feed",
+  manual_position: "/current_postion",
+  live_position: "/current_postionn",
+  control: "/control"
+}
+
+export const radio_endpoints = {
+  
 }

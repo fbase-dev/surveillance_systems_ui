@@ -1,6 +1,4 @@
-import { useState, useEffect } from "react";
-import ShipRadar from "./ShipRadar";
-import { Flex, Stack, Text } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import RadarSection from "./RadarSection";
 import AboutSection from "./AboutSection";
 import ContactsSection from "./ContactsSection";

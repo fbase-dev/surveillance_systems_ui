@@ -40,17 +40,11 @@ type Marker = { x: number; y: number; color: string };
 type ShipRadarProps = {
   heading: number;
   markers: Marker[];
-  speed: number;
-  orientation: string;
-  coordinates: string;
 };
 
 export default function ShipRadar({
   heading,
   markers,
-  speed,
-  orientation,
-  coordinates,
 }: ShipRadarProps) {
   const sectorPath = describeSector(100, 100, 100, heading - 30, heading + 30);
   return (
