@@ -1,7 +1,7 @@
 import { Stack } from "@mantine/core";
-import RadarSection from "./RadarSection";
 import AboutSection from "./AboutSection";
 import ContactsSection from "./ContactsSection";
+import RadarSection from "../RadarSection";
 
 export default function AboutTab() {
   return (

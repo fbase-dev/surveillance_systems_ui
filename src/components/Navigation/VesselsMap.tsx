@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@mantine/core";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { useOwnVesselsAis } from "@/app/hooks/useOwnVesselsAis";
 import { useTargetLocation } from "@/app/hooks/useTargetLocation";
 import { useJsApiLoader } from "@react-google-maps/api";
@@ -25,7 +24,6 @@ export default function VesselsMap() {
     direction: `${target.lat_dir} ${target.lon_dir}`,
     target_number: target.target_number,
   }));
-  console.log(locations);
 
   const otherVesselSvgString = `<svg  xmlns="http://www.w3.org/2000/svg"  width="40"  height="40"  viewBox="0 0 40 40"  fill="none"  stroke="#14B8FF"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-ship"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M2 20a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1" /><path d="M4 18l-1 -5h18l-2 4" /><path d="M5 13v-6h8l4 6" /><path d="M7 7v-4h-1" /></svg>`
 
@@ -150,7 +148,7 @@ export default function VesselsMap() {
       bd={"1px solid var(--app-shell-border-color)"}
       bg={"rgba(3, 14, 27, 0.898)"}
       p={0}
-      h={"85vh"}
+      h={"87vh"}
       pos={"relative"}
     >
       <div id="map" style={{ width: "100%", height: "100%" }}></div>
