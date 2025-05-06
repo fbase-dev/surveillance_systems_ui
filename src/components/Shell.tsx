@@ -7,6 +7,7 @@ import React from "react";
 import { usePathname } from 'next/navigation'
 import { IconBell, IconVolumeOff } from "@tabler/icons-react";
 import Link from "next/link";
+import { APIProvider } from "@vis.gl/react-google-maps";
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
@@ -69,7 +70,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         ))}
       </AppShell.Navbar>
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main>
+        <APIProvider apiKey={process.env.NEXT_PUBLIC_MAP_API_KEY||""}>
+          {children}
+        </APIProvider>
+      </AppShell.Main>
     </AppShell>
   );
 }

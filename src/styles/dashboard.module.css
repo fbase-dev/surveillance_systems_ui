@@ -1,0 +1,12 @@
+.aside {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    top: var(--app-shell-header-offset, 0rem);
+    height: calc(
+      100dvh - var(--app-shell-header-offset, 0rem) -
+        var(--app-shell-footer-offset, 0rem)
+    );
+    transition-property: transform, top, height;
+  }
+  

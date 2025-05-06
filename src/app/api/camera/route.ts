@@ -12,16 +12,29 @@ export async function GET(request: Request) {
     const upstreamResponse = await fetch(apiUrl, { cache: "no-cache" });
 
     if (!upstreamResponse.ok) {
-      return new Response("Failed to fetch stream", { status: 500 });
+      return new Response("Failed to fetch resource", { status: upstreamResponse.status });
     }
 
-    return new Response(upstreamResponse.body, {
+    // Handle MJPEG stream
+    if (path === "/video_feed") {
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers: {
+          "Content-Type": "multipart/x-mixed-replace; boundary=frame",
+        },
+      });
+    }
+
+    // Handle all other JSON responses
+    const data = await upstreamResponse.json();
+    return new Response(JSON.stringify(data), {
       status: upstreamResponse.status,
       headers: {
-        "Content-Type": upstreamResponse.headers.get("Content-Type") || "video/mp4",
+        "Content-Type": "application/json",
       },
     });
   } catch (error) {
-    return new Response("Error fetching video stream", { status: 500 });
+    console.error("API Proxy Error:", error);
+    return new Response("Error fetching resource", { status: 500 });
   }
 }

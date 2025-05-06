@@ -3,7 +3,7 @@ import { BackgroundImage, Card, Paper } from "@mantine/core";
 export default function HeroSection() {
   return (
     <Paper
-      h={"57vh"}
+      h={"90vh"}
       w={"100vw"}
       p={0}
       pe={"lg"}

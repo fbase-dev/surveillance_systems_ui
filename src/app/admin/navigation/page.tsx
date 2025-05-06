@@ -1,7 +1,8 @@
-import { Text } from "@mantine/core";
+"use client"
+import VesselsMap from "@/components/Navigation/VesselsMap";
 
 export default function Navigation(){
     return(
-        <Text>Navigation Page</Text>
+        <VesselsMap />
     )
 }

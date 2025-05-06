@@ -8,6 +8,7 @@ type AisData = {
 }
 export const useOwnVesselsAis = () => {
   const [aisData, setAisData] = useState<AisData>();
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,5 +17,5 @@ export const useOwnVesselsAis = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  return { aisData, loading };
+  return { ...aisData, loading };
 };

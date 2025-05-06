@@ -26,16 +26,14 @@ export function Metric({ title, value, textAlign = "left" }: MetricProps) {
 }
 
 export default function () {
-  const { aisData } = useOwnVesselsAis();
+  const { heading, lat, lon, speed } = useOwnVesselsAis();
 
   const aisDms = new DmsCoordinates(
-    Number(aisData?.lat || 0),
-    Number(aisData?.lon || 0)
+    Number(lat || 0),
+    Number(lon || 0)
   );
   var longDms = aisDms.longitude.toString(0);
   var latDms = aisDms.latitude.toString(0);
-
-  const heading = aisData?.heading||0
 
   return (
     <Flex justify={"center"} align={"center"} pos={"relative"} p={"lg"}>
@@ -46,11 +44,11 @@ export default function () {
         top={0}
         left={0}
       >
-        <Metric title={"Speed"} value={`${aisData?.speed||"--- ---"} kn`} />
+        <Metric title={"Speed"} value={`${speed||"--- ---"} kn`} />
         <Metric title={"Orientation"} value="NE" textAlign="right" />
       </Flex>
       <ShipRadar
-        heading={heading}
+        heading={heading||0}
         markers={[
           { x: 90, y: 90, color: "#ffffff" },
           { x: 150, y: 60, color: "yellow" },
