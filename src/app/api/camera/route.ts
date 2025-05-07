@@ -9,23 +9,27 @@ export async function GET(request: Request) {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL}${path}`;
 
   try {
-    const upstreamResponse = await fetch(apiUrl, { cache: "no-cache" });
+    const upstreamResponse = await fetch(apiUrl, {
+      cache: "no-cache",
+    });
 
     if (!upstreamResponse.ok) {
-      return new Response("Failed to fetch resource", { status: upstreamResponse.status });
+      return new Response("Failed to fetch resource", {
+        status: upstreamResponse.status,
+      });
     }
 
-    // Handle MJPEG stream
     if (path === "/video_feed") {
+      // Stream MJPEG as-is
       return new Response(upstreamResponse.body, {
         status: upstreamResponse.status,
         headers: {
           "Content-Type": "multipart/x-mixed-replace; boundary=frame",
+          "Cache-Control": "no-cache",
         },
       });
     }
 
-    // Handle all other JSON responses
     const data = await upstreamResponse.json();
     return new Response(JSON.stringify(data), {
       status: upstreamResponse.status,
@@ -36,5 +40,39 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("API Proxy Error:", error);
     return new Response("Error fetching resource", { status: 500 });
+  }
+}
+
+
+export async function POST(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const path = searchParams.get("path");
+
+  if (!path) {
+    return new Response("Path is required", { status: 400 });
+  }
+
+  const apiUrl = `${process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL}${path}`;
+
+  try {
+    const body = await request.text(); // forwarding raw text body
+    const upstreamResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body,
+    });
+
+    const responseText = await upstreamResponse.text();
+    return new Response(responseText, {
+      status: upstreamResponse.status,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
+  } catch (error) {
+    console.error("API Proxy POST Error:", error);
+    return new Response("Error forwarding request", { status: 500 });
   }
 }

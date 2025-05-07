@@ -13,7 +13,10 @@ export const useOwnVesselsAis = () => {
 
   useEffect(() => {
     getOwnAisData()
-      .then((res) => setAisData(JSON.parse(res.data)))
+      .then((res) => {
+        const data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+        setAisData(data);
+      })
       .finally(() => setLoading(false));
   }, []);
 

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import {IconFolderDollar, IconHome, IconNote, icons, IconUsers} from "@tabler/icons-react"
+import {IconCamera, IconCurrentLocation, IconFolderDollar, IconHome, IconNote, icons, IconSettings, IconTools, IconUsers} from "@tabler/icons-react"
 
 export const navItems: {
     name: string;
@@ -7,18 +7,18 @@ export const navItems: {
     href: string;
 }[] = [
     {
-        name: "Dahsboard",
+        name: "Dashboard",
         icon: <IconHome size={25} />,
         href: "/admin/dashboard",
     },
     {
         name: "Navigation",
-        icon: <IconFolderDollar size={25} />,
+        icon: <IconCurrentLocation size={25} />,
         href: "/admin/navigation",
     },
     {
         name: "Cameras",
-        icon: <IconUsers size={25} />,
+        icon: <IconCamera size={25} />,
         href: "/admin/cameras",
     },
     {
@@ -28,12 +28,12 @@ export const navItems: {
     },
     {
         name: "Maintenance",
-        icon: <IconNote size={25}/>,
+        icon: <IconTools size={25}/>,
         href: "/admin/maintenance"
     },
     {
         name: "Settings",
-        icon: <IconNote size={25}/>,
+        icon: <IconSettings size={25}/>,
         href: "/admin/settings"
     }
 ].filter(Boolean);
