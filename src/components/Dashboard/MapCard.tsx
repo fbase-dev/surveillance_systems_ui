@@ -1,4 +1,4 @@
-import { useOwnVesselsAis } from "@/app/hooks/useOwnVesselsAis";
+import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
 import { Card, Title } from "@mantine/core";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import { useRouter } from "next/navigation";

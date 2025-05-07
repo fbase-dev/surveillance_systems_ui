@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@mantine/core";
-import { useOwnVesselsAis } from "@/app/hooks/useOwnVesselsAis";
-import { useTargetLocation } from "@/app/hooks/useTargetLocation";
+import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
+import { useTargetLocation } from "@/hooks/useTargetLocation";
 import { useJsApiLoader } from "@react-google-maps/api";
 
 export default function VesselsMap() {

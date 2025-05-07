@@ -1,13 +1,16 @@
 "use client"
 import CamCard from "@/components/Cameras/CamCard";
-import CameraControl from "@/components/Cameras/CameraControl";
+import CameraControls from "@/components/Cameras/CameraControls";
+import { CameraControlProvider } from "@/contexts/CameraControlContext";
 import { Stack } from "@mantine/core";
 
 export default function Cameras(){
     return(
-        <Stack pos={"relative"}>
-            <CamCard />
-            <CameraControl />
-        </Stack>
+        <CameraControlProvider>
+            <Stack pos={"relative"}>
+                <CamCard />
+                <CameraControls />
+            </Stack>
+        </CameraControlProvider>
     )
 }

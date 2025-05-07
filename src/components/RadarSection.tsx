@@ -1,7 +1,7 @@
 import { Stack, Flex, Text } from "@mantine/core";
 import { ReactNode } from "react";
 import ShipRadar from "./ShipRadar";
-import { useOwnVesselsAis } from "@/app/hooks/useOwnVesselsAis";
+import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
 import DmsCoordinates from "dms-conversion";
 
 type MetricProps = {

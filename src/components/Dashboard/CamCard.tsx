@@ -1,4 +1,4 @@
-import { useVideoFeed } from "@/app/hooks/useVideoFeed";
+import { useVideoFeed } from "@/hooks/useVideoFeed";
 import { Card, Image, Title } from "@mantine/core";
 import { useRouter } from "next/navigation";
 

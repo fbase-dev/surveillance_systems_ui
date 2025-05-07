@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { camera_control_endpoints } from '../lib/endpoints';
+import { camera_control_endpoints } from '../app/lib/endpoints';
 
 export const useVideoFeed = () => {
   const videoRef = useRef<HTMLImageElement>(null);

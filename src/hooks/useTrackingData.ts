@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getTrackingData } from '../lib/services/aisService';
+import { getTrackingData } from '../app/lib/services/aisService';
 
 export const useTrackingData = () => {
   const [trackingData, setTrackingData] = useState([]);

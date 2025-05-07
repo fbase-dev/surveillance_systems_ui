@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
-import { getOtherAisData } from '../lib/services/aisService';
+import { getOwnAisData } from '../app/lib/services/aisService';
+type AisData = {
+  lat: number,
+  lon: number,
+  speed: string,
+  heading: number,
+}
+export const useOwnVesselsAis = () => {
+  const [aisData, setAisData] = useState<AisData>();
 
-export const useOtherVesselsAis = () => {
-  const [otherAisData, setAisData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getOtherAisData()
+    getOwnAisData()
       .then((res) => {
         const data = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
         setAisData(data);
@@ -14,5 +20,5 @@ export const useOtherVesselsAis = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  return { otherAisData, loading };
+  return { ...aisData, loading };
 };

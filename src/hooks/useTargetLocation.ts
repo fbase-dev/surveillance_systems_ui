@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getTargetLocation } from '../lib/services/aisService';
+import { getTargetLocation } from '../app/lib/services/aisService';
 
 type Target = {
   lat: number,
