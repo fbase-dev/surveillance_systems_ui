@@ -8,7 +8,7 @@ export const ais_endpoints = {
 export const camera_control_endpoints = {
   stream: "/video_feed",
   manual_position: "/current_position",
-  live_position: "/current_position",
+  live_position: "/current_positionn",
   control: "/control"
 }
 

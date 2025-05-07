@@ -9,12 +9,20 @@ export const getCameraPosition = () =>
 export const getLiveTrackingPosition = () =>
   axios.get(`${API_BASE}${camera_control_endpoints.live_position}`);
 
-export const sendCameraCommand = async(
-  action: string,
-  params: Record<string, any> = {}
-) =>{
-  const body = new URLSearchParams({ action });
-  await axios.post(`/api/camera?path=/control`, body.toString(), {
+const toFormData = (data: Record<string, any>) => {
+  const formData = new URLSearchParams();
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      formData.append(key, data[key]);
+    }
+  }
+  return formData;
+};
+
+export const sendCameraCommand = async (action: string, params: Record<string, any> = {}) => {
+  const payload = toFormData({ action, ...params });
+
+  await axios.post('/api/camera?path=/control', payload, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
