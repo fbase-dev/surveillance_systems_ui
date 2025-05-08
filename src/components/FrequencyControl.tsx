@@ -1,4 +1,4 @@
-import { Slider, Button, Group, Select, ActionIcon } from "@mantine/core";
+import { Slider, Group, Select, ActionIcon } from "@mantine/core";
 import { IconPlayerPlay, IconPlayerSkipForward, IconPlayerSkipBack, IconVolume, IconChevronDown } from "@tabler/icons-react";
 import { useState } from "react";
 

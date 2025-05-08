@@ -1,7 +1,6 @@
 "use client";
 
-import { Card, Text, Group, Paper } from "@mantine/core";
-import { useState, useEffect } from "react";
+import { Paper } from "@mantine/core";
 
 function polarToCartesian(
   cx: number,

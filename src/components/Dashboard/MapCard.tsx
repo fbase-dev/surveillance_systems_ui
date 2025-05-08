@@ -2,11 +2,9 @@ import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
 import { Card, Title } from "@mantine/core";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function MapCard() {
   const { lat, lon } = useOwnVesselsAis();
-  const router = useRouter();
   return (
     <Card h={"40vh"} p={0} pos={"relative"}  component={Link} href={"/admin/navigation"}>
       <Title order={3} pos={"absolute"} top={5} left={10} style={{zIndex: 1}} m={0}>

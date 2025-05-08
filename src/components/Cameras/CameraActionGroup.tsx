@@ -1,6 +1,4 @@
-import { Button, ButtonGroup, Flex, Title } from "@mantine/core";
-import { useState } from "react";
-import { DatePickerInput, DateValue } from '@mantine/dates';
+import { Button, Flex, Title } from "@mantine/core";
 import { useCamera } from "@/contexts/CameraControlContext";
 
 export default function CameraActionGroup() {

@@ -2,7 +2,7 @@
 import FrequencyControl from "@/components/FrequencyControl";
 import DetailsCard from "@/components/Navigation/DetailsCard";
 import VesselsMap from "@/components/Navigation/VesselsMap";
-import { Grid, GridCol, Paper, Stack } from "@mantine/core";
+import { Grid, GridCol, Paper } from "@mantine/core";
 
 export default function Navigation() {
   return (

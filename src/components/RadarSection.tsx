@@ -25,15 +25,15 @@ export function Metric({ title, value, textAlign = "left" }: MetricProps) {
   );
 }
 
-export default function () {
+export default function RadarSection() {
   const { heading, lat, lon, speed } = useOwnVesselsAis();
 
   const aisDms = new DmsCoordinates(
     Number(lat || 0),
     Number(lon || 0)
   );
-  var longDms = aisDms.longitude.toString(0);
-  var latDms = aisDms.latitude.toString(0);
+  const longDms = aisDms.longitude.toString(0);
+  const latDms = aisDms.latitude.toString(0);
 
   return (
     <Flex justify={"center"} align={"center"} pos={"relative"} p={"lg"}>

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import {IconCamera, IconCurrentLocation, IconFolderDollar, IconHome, IconNote, icons, IconSettings, IconTools, IconUsers} from "@tabler/icons-react"
+import {IconCamera, IconCurrentLocation, IconHome} from "@tabler/icons-react"
 
 export const navItems: {
     name: string;

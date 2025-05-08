@@ -1,4 +1,4 @@
-import { BackgroundImage, Card, Image, Paper, Stack } from "@mantine/core";
+import { BackgroundImage, Paper, Stack } from "@mantine/core";
 import RadarSection from "../RadarSection";
 
 export default function AboutTab() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionIcon, AppShell, Avatar, Burger, Button, Flex, Group, Image, NavLink, UnstyledButton } from "@mantine/core";
+import { ActionIcon, AppShell, Avatar, Burger, Flex, Group, Image, NavLink } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { navItems } from "@/utils/navItems";
 import React from "react";
@@ -27,7 +27,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <Group h="100%" px="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" />
           <Group justify="space-between" style={{ flex: 1 }}>
-            <Image src={"/Logo.png"} />
+            <Image src={"/Logo.png"} alt="Logo" />
             <Flex ml="xl" gap={0} visibleFrom="md">
               {navItems.map(({ name, href }, index) => (
                 <NavLink

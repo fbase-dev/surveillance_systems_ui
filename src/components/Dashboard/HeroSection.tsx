@@ -1,4 +1,4 @@
-import { BackgroundImage, Card, Paper } from "@mantine/core";
+import { Paper } from "@mantine/core";
 
 export default function HeroSection() {
   return (

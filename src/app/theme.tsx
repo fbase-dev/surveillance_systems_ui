@@ -1,5 +1,4 @@
 import {
-    ActionIcon,
     createTheme,
 } from "@mantine/core";
 import { IconX } from "@tabler/icons-react";

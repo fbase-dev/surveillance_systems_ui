@@ -1,4 +1,4 @@
-import { Button, Flex, SimpleGrid, Stack, Text } from "@mantine/core";
+import { Button, Flex, Stack, Text } from "@mantine/core";
 import { IconEdit } from "@tabler/icons-react";
 import Property from "./Property";
 

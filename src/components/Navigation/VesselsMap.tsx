@@ -37,6 +37,8 @@ export default function VesselsMap() {
   const [infoWindow, setInfoWindow] = useState<google.maps.InfoWindow | null>(
     null
   );
+  console.log(selectedMarker, infoWindow);
+  
 
   const { isLoaded } = useJsApiLoader({
     id: "google-maps-script",
@@ -87,7 +89,7 @@ export default function VesselsMap() {
         const markers = locations.map((poi) => {
           const marker = new AdvancedMarkerElement({
             position: poi.location,
-            map, // <-- add to map directly
+            map, 
             content: otherVesselSvg.cloneNode(true),
           });
 
