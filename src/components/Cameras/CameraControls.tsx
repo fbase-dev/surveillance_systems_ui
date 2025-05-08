@@ -9,7 +9,7 @@ const CameraControls = () => {
 
   return (
     <Paper bg={"transparent"} w={"fit-content"} pos={"absolute"} bottom={25} left={25}>
-      <Stack justify="space-between" h={"80vh"}>
+      <Stack justify="space-between" h={"72vh"}>
         <PositionCard />
         <Flex justify="space-between" w={"90vw"} align={"center"}>
           <RadialControlMenu />

@@ -9,7 +9,8 @@ export const camera_control_endpoints = {
   stream: "/video_feed",
   manual_position: "/current_position",
   live_position: "/current_positionn",
-  control: "/control"
+  control: "/control",
+  status: "/status"
 }
 
 export const radio_endpoints = {

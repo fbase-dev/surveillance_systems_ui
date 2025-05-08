@@ -9,7 +9,7 @@ export default function PositionCard() {
       <Text fw={"bold"} me={"xs"}>
         Pan:
       </Text>
-      <Text me={"md"}>{position.pan||"-- --"}°</Text>
+      <Text me={"md"}>{position.pan === 0 ? position.pan : position.pan||"-- --"}°</Text>
 
       <Text fw={"bold"} me={"xs"}>
         Tilt:

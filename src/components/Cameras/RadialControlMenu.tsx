@@ -1,9 +1,10 @@
 import { useCamera } from "@/contexts/CameraControlContext";
 import { ActionIcon } from "@mantine/core";
-import { IconChevronUp, IconChevronDown, IconChevronLeft, IconChevronRight, IconPlayerStop } from "@tabler/icons-react";
+import { IconChevronUp, IconChevronDown, IconChevronLeft, IconChevronRight, IconPlayerStop, IconPlayerPlay } from "@tabler/icons-react";
 
 export default function RadialControlMenu(){
-    const { control } = useCamera();
+    const { control, status } = useCamera();
+    
     return(
         <div
           style={{
@@ -78,17 +79,33 @@ export default function RadialControlMenu(){
           </ActionIcon>
 
           {/* Center circle, stop */}
-          <ActionIcon
-            variant="transparent"
-            color="white"
-            radius={"50%"}
-            bd={"2px solid #434b57"}
-              w={110}
-              h={110}
-              onClick={() => control("stop")}
-            >
-            <IconPlayerStop size={30} />
-          </ActionIcon>
+          {
+            status === "paused" ?
+              <ActionIcon
+                variant="transparent"
+                color="white"
+                radius={"50%"}
+                bd={"2px solid #434b57"}
+                  w={110}
+                  h={110}
+                  onClick={() => control("resume")}
+                >
+                <IconPlayerPlay size={30} />
+              </ActionIcon> 
+              :
+              <ActionIcon
+                variant="transparent"
+                color="white"
+                radius={"50%"}
+                bd={"2px solid #434b57"}
+                  w={110}
+                  h={110}
+                  onClick={() => control("stop")}
+                >
+                <IconPlayerStop size={30} />
+              </ActionIcon>
+          }
+          
         </div>
     )
 }

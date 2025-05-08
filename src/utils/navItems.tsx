@@ -21,19 +21,19 @@ export const navItems: {
         icon: <IconCamera size={25} />,
         href: "/admin/cameras",
     },
-    {
-        name: "Reports",
-        icon: <IconNote  size={25}/>,
-        href: "/admin/reports"
-    },
-    {
-        name: "Maintenance",
-        icon: <IconTools size={25}/>,
-        href: "/admin/maintenance"
-    },
-    {
-        name: "Settings",
-        icon: <IconSettings size={25}/>,
-        href: "/admin/settings"
-    }
+    // {
+    //     name: "Reports",
+    //     icon: <IconNote  size={25}/>,
+    //     href: "/admin/reports"
+    // },
+    // {
+    //     name: "Maintenance",
+    //     icon: <IconTools size={25}/>,
+    //     href: "/admin/maintenance"
+    // },
+    // {
+    //     name: "Settings",
+    //     icon: <IconSettings size={25}/>,
+    //     href: "/admin/settings"
+    // }
 ].filter(Boolean);

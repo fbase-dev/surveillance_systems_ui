@@ -1,19 +1,15 @@
-import { ButtonGroup, Flex, Title } from "@mantine/core";
+import { Button, ButtonGroup, Flex, Title } from "@mantine/core";
 import { useState } from "react";
 import { DatePickerInput, DateValue } from '@mantine/dates';
+import { useCamera } from "@/contexts/CameraControlContext";
 
 export default function CameraActionGroup() {
-  const [value, setValue] = useState<DateValue | undefined>(undefined);
+  const {modalHandler} = useCamera();
+
   return (
-    <Flex justify={"space-between"}>
+    <Flex justify={"space-between"} mb={"md"}>
         <Title order={3}>Camera Management</Title>
-      <ButtonGroup>
-        <DatePickerInput
-          placeholder="Pick date"
-          value={value}
-          onChange={setValue}
-        />
-      </ButtonGroup>
+      <Button onClick={modalHandler.open}>Set Position</Button>
     </Flex>
   );
 }

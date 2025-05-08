@@ -293,10 +293,9 @@ export const theme = createTheme({
               overlay: { background: "rgba(12, 31, 54, 0.7)" },
             },
             closeButtonProps: {
+              bg: "#14B8FF1A",
               icon: (
-                <ActionIcon variant="filled" size={32} aria-label="close">
-                  <IconX />
-                </ActionIcon>
+                  <IconX color="#14B8FF" />
               ),
             },
           },
@@ -319,10 +318,9 @@ export const theme = createTheme({
           defaultProps: {
             zIndex: 300,
             closeButtonProps: {
+              bg: "#14B8FF1A",
               icon: (
-                <ActionIcon variant="filled" size={32} aria-label="close">
-                  <IconX />
-                </ActionIcon>
+                  <IconX color="#14B8FF" />
               ),
             },
             styles: {

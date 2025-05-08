@@ -19,10 +19,17 @@ const toFormData = (data: Record<string, any>) => {
   return formData;
 };
 
-export const sendCameraCommand = async (action: string, params: Record<string, any> = {}) => {
-  const payload = toFormData({ action, ...params });
+export const sendCameraCommand = async (
+  action: string,
+  params: Record<string, any> = {}
+) => {
+  const payload = new URLSearchParams({ action });
 
-  await axios.post('/api/camera?path=/control', payload, {
+  Object.entries(params).forEach(([key, value]) => {
+    payload.append(key, value);
+  });
+
+  await axios.post(`/api/camera?path=/control`, payload.toString(), {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },

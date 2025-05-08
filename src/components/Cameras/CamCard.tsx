@@ -5,7 +5,7 @@ export default function CamCard() {
   const { streamURL } = useVideoFeed();
 
   return (
-    <Card h={"91vh"} p={0} m={"-md"}>
+    <Card h={"80vh"} p={0}>
       {!(streamURL === "") && (
         <Image
           src={streamURL}
