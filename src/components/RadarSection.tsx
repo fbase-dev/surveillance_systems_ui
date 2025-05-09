@@ -1,8 +1,8 @@
 import { Stack, Flex, Text } from "@mantine/core";
 import { ReactNode } from "react";
 import ShipRadar from "./ShipRadar";
-import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
 import DmsCoordinates from "dms-conversion";
+import { useDashboard } from "@/contexts/DashboardContext";
 
 type MetricProps = {
   title: string;
@@ -26,8 +26,9 @@ export function Metric({ title, value, textAlign = "left" }: MetricProps) {
 }
 
 export default function RadarSection() {
-  const { heading, lat, lon, speed } = useOwnVesselsAis();
-
+  const { ownAisData } = useDashboard();
+  
+  const { heading, lat, lon, speed } = ownAisData || {};
   const aisDms = new DmsCoordinates(
     Number(lat || 0),
     Number(lon || 0)
@@ -47,13 +48,13 @@ export default function RadarSection() {
         <Metric title={"Speed"} value={`${speed||"--- ---"} kn`} />
         <Metric title={"Orientation"} value="NE" textAlign="right" />
       </Flex>
-      <ShipRadar
-        heading={heading||0}
-        markers={[
-          { x: 90, y: 90, color: "#ffffff" },
-          { x: 150, y: 60, color: "yellow" },
-        ]}
-      />
+      {/* {
+        selectedVessel === ownAisData ? 
+        <ShipRadar heading={heading} />:
+        // @ts-ignore
+        <ShipRadar lat_dir={selectedVessel.lat_dir} lon_dir={selectedVessel.lon_dir} />
+      } */}
+      <ShipRadar heading={heading} />
       <Flex
         justify={"space-between"}
         w={"100%"}

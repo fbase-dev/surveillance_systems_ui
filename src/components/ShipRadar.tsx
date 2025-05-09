@@ -1,6 +1,7 @@
 "use client";
 
 import { Paper } from "@mantine/core";
+import { useEffect, useState } from "react";
 
 function polarToCartesian(
   cx: number,
@@ -36,16 +37,43 @@ function describeSector(
 
 type Marker = { x: number; y: number; color: string };
 
+type Cardinal = "N" | "S" | "E" | "W";
 type ShipRadarProps = {
-  heading: number;
-  markers: Marker[];
+  heading?: number;
+  lat_dir?: Cardinal;
+  lon_dir?: Cardinal;
+};
+const directionToDegrees: Record<string, number> = {
+  N: 0,
+  NE: 45,
+  E: 90,
+  SE: 135,
+  S: 180,
+  SW: 225,
+  W: 270,
+  NW: 315,
 };
 
+function getDirectionFromLatLon(lat_dir?: Cardinal, lon_dir?: Cardinal): number {
+  const dir = (lat_dir ?? "") + (lon_dir ?? "");
+  return directionToDegrees[dir] ?? 0;
+}
+
 export default function ShipRadar({
-  heading,
-  markers,
+  heading, lat_dir, lon_dir
 }: ShipRadarProps) {
-  const sectorPath = describeSector(100, 100, 100, heading - 30, heading + 30);
+  const angle =
+  heading !== undefined
+    ? heading
+    : getDirectionFromLatLon(lat_dir, lon_dir);
+
+  const [pathD, setPathD] = useState('');
+
+  useEffect(() => {
+    const calculatedD = describeSector(100, 100, 100, angle - 30, angle + 30);
+    setPathD(calculatedD);
+  }, []);
+
   return (
     <Paper p="md" radius="md" bg={"transparent"}>
       <svg viewBox="0 0 200 200" width="200" height="200">
@@ -77,12 +105,12 @@ export default function ShipRadar({
         <circle cx="100" cy="100" r="20" fill="none" stroke="#1e293b" strokeWidth="1" />
 
         {/* Ship indicator */}
-        <path d={sectorPath} fill="url(#gradient)" />
+        <path d={pathD} fill="url(#gradient)" />
 
         {/* Dynamic markers */}
-        {markers.map((m, i) => (
+        {/* {markers.map((m, i) => (
           <circle key={i} cx={m.x} cy={m.y} r="6" fill={m.color} />
-        ))}
+        ))} */}
       </svg>
     </Paper>
   );

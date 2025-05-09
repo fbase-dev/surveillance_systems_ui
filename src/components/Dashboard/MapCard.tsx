@@ -1,10 +1,11 @@
-import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
+import { useDashboard } from "@/contexts/DashboardContext";
 import { Card, Title } from "@mantine/core";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import Link from "next/link";
 
 export default function MapCard() {
-  const { lat, lon } = useOwnVesselsAis();
+  const { ownAisData } = useDashboard();
+  const {lat, lon} = ownAisData || {};
   return (
     <Card h={"40vh"} p={0} pos={"relative"}  component={Link} href={"/admin/navigation"}>
       <Title order={3} pos={"absolute"} top={5} left={10} style={{zIndex: 1}} m={0}>
