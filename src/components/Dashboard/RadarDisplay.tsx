@@ -1,10 +1,9 @@
 import { useDashboard } from "@/contexts/DashboardContext";
-import { AspectRatio, BackgroundImage, Card, Container, Image, Overlay, Popover } from "@mantine/core";
+import { BackgroundImage, Card, Container, Popover } from "@mantine/core";
 import Konva from "konva";
 import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
-import { Stage, Layer, Circle, Line, Text, Image as KonvaImage, Shape } from "react-konva";
-import useImage from "use-image";
+import { Stage, Layer, Circle, Line, Text, Shape } from "react-konva";
 
 const toRadians = (deg: number): number => deg * (Math.PI / 180);
 
@@ -56,8 +55,6 @@ const RadarDisplay: React.FC = () => {
   const { selectedVessel, setSelectedVessel, targetLocations, ownAisData } = useDashboard();
 
   const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${ownAisData.lat},${ownAisData.lon}&zoom=13&size=${canvasSize}x${canvasSize}&maptype=roadmap&key=${process.env.NEXT_PUBLIC_MAP_API_KEY}&map_id=${process.env.NEXT_PUBLIC_MAP_ID}`;
-  const [mapImage] = useImage(mapUrl);
-  const [shipIcon] = useImage("/images/ship.svg"); 
 
   const distances = targetLocations.map((v) =>
     haversineDistance(ownAisData.lat, ownAisData.lon, parseFloat(v.lat.toString()), parseFloat(v.lon.toString()))
@@ -72,8 +69,8 @@ const RadarDisplay: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const sweepX = canvasSize / 2 + (canvasSize / 2) * Math.sin(toRadians(sweepAngle));
-  const sweepY = canvasSize / 2 - (canvasSize / 2) * Math.cos(toRadians(sweepAngle));
+  // const sweepX = canvasSize / 2 + (canvasSize / 2) * Math.sin(toRadians(sweepAngle));
+  // const sweepY = canvasSize / 2 - (canvasSize / 2) * Math.cos(toRadians(sweepAngle));
 
   return (
     <Card p={0}>
@@ -96,7 +93,7 @@ const RadarDisplay: React.FC = () => {
                 {/* cross lines */}
                 <Line points={[canvasSize / 2, 0, canvasSize / 2, canvasSize]} stroke="white" strokeWidth={1} />
                 <Line points={[0, canvasSize / 2, canvasSize, canvasSize / 2]} stroke="white" strokeWidth={1} />
-                
+
                 {/* Moving radar sector with gradient background */}
                 <Shape
                   sceneFunc={(context, shape) => {
