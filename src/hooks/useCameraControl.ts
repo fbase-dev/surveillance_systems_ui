@@ -61,6 +61,7 @@ export const useCameraControl = () => {
 
   // Control the camera (send commands like pan, tilt, zoom)
   const control = async (action: string, extra?: Record<string, any>) => {
+    setLoading(true);
     try {
       await sendCameraCommand(action, extra);
       await fetchCachePosition(); 
@@ -68,6 +69,7 @@ export const useCameraControl = () => {
     } catch (error) {
       console.error("Error controlling camera", error);
     }
+    setLoading(false);
   };
 
   // Fetch the stastus of the camera

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@mantine/core";
-import { useOwnVesselsAis } from "@/hooks/useOwnVesselsAis";
 import { useTargetLocation } from "@/hooks/useTargetLocation";
 import { useJsApiLoader } from "@react-google-maps/api";
+import { useDashboard } from "@/contexts/DashboardContext";
 
 export default function VesselsMap() {
   const { targetLocations } = useTargetLocation();
-  const { lat, lon, heading } = useOwnVesselsAis();
+  const { ownAisData } = useDashboard();
+  const { lat, lon, heading } = ownAisData;
 
   type Poi = {
     key: string;

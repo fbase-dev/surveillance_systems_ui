@@ -1,11 +1,45 @@
-<svg width="146" height="100" viewBox="0 0 146 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M144.553 9.99391C146.116 5.92935 143.673 1.69833 139.371 1.01954C124.825 -1.27598 97.8712 0.121754 66.5949 18.1791L9.46061 51.1656C0.909598 56.1025 -2.03637 67.0087 2.88061 75.5251L11.7836 90.9455C16.7006 99.462 27.6185 102.364 36.1695 97.4268L93.3038 64.4403C124.58 46.383 139.267 23.7393 144.553 9.99391Z" fill="#14B8FF"/>
-<path d="M144.553 9.99391C146.116 5.92935 143.673 1.69833 139.371 1.01954C124.825 -1.27598 97.8712 0.121754 66.5949 18.1791L9.46061 51.1656C0.909598 56.1025 -2.03637 67.0087 2.88061 75.5251L11.7836 90.9455C16.7006 99.462 27.6185 102.364 36.1695 97.4268L93.3038 64.4403C124.58 46.383 139.267 23.7393 144.553 9.99391Z" fill="url(#paint0_linear_20002_10838)" fill-opacity="0.5"/>
-<path d="M139.293 1.51303C143.156 2.12254 145.392 5.80593 144.211 9.46068L144.086 9.81469C138.842 23.4529 124.231 46.0072 93.0537 64.0075L35.9197 96.9938C27.6063 101.794 16.9952 98.971 12.2172 90.6956L3.31386 75.2746C-1.46389 66.999 1.39732 56.3983 9.71075 51.5985L66.8447 18.6122C97.535 0.893195 124.02 -0.717155 138.608 1.40937L139.293 1.51303Z" stroke="white" stroke-opacity="0.25"/>
-<defs>
-<linearGradient id="paint0_linear_20002_10838" x1="7.3321" y1="83.2353" x2="144.161" y2="4.23705" gradientUnits="userSpaceOnUse">
-<stop offset="0.22" stop-color="white"/>
-<stop offset="1" stop-color="white" stop-opacity="0.1"/>
-</linearGradient>
-</defs>
+<svg viewBox="0 0 300 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ship Hull with rounded triangular top -->
+  <path d="
+    M100,750
+    L100,150
+    Q150,50 200,150
+    L200,750
+    Q150,770 100,750
+    Z" 
+    fill="#2b2b2b" />
+
+  <!-- Bridge (near top) -->
+  <rect x="115" y="160" width="70" height="40" fill="#cccccc" rx="8" />
+
+  <!-- Containers -->
+  <g fill="#b2b2b2">
+    <!-- Each row has 2 containers side by side -->
+    <rect x="110" y="220" width="30" height="40" />
+    <rect x="160" y="220" width="30" height="40" />
+
+    <rect x="110" y="270" width="30" height="40" />
+    <rect x="160" y="270" width="30" height="40" />
+
+    <rect x="110" y="320" width="30" height="40" />
+    <rect x="160" y="320" width="30" height="40" />
+
+    <rect x="110" y="370" width="30" height="40" />
+    <rect x="160" y="370" width="30" height="40" />
+
+    <rect x="110" y="420" width="30" height="40" />
+    <rect x="160" y="420" width="30" height="40" />
+
+    <rect x="110" y="470" width="30" height="40" />
+    <rect x="160" y="470" width="30" height="40" />
+
+    <rect x="110" y="520" width="30" height="40" />
+    <rect x="160" y="520" width="30" height="40" />
+
+    <rect x="110" y="570" width="30" height="40" />
+    <rect x="160" y="570" width="30" height="40" />
+
+    <rect x="110" y="620" width="30" height="40" />
+    <rect x="160" y="620" width="30" height="40" />
+  </g>
 </svg>

@@ -1,9 +1,10 @@
 import { useCamera } from "@/contexts/CameraControlContext";
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, LoadingOverlay } from "@mantine/core";
 import { IconChevronUp, IconChevronDown, IconChevronLeft, IconChevronRight, IconPlayerStop, IconPlayerPlay } from "@tabler/icons-react";
+import styles from "@/styles/camera.module.css";
 
 export default function RadialControlMenu(){
-    const { control, status } = useCamera();
+    const { control, status, loading } = useCamera();
     
     return(
         <div
@@ -18,6 +19,7 @@ export default function RadialControlMenu(){
             justifyContent: "center",
           }}
         >
+          <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} styles={{root:{ borderRadius: "50%"},overlay: {background: "#030E1BE5"}}} />
           {/* Up */}
           <ActionIcon
             variant="transparent"
@@ -28,6 +30,8 @@ export default function RadialControlMenu(){
               left: "50%",
               transform: "translateX(-50%)",
             }}
+            className={styles.button}
+            disabled={status === "active"}
             onClick={() => control("tilt_up")}
           >
             <IconChevronUp size={24} />
@@ -43,6 +47,8 @@ export default function RadialControlMenu(){
               left: "50%",
               transform: "translateX(-50%)",
             }}
+            className={styles.button}
+            disabled={status === "active"}
             onClick={() => control("tilt_down")}
           >
             <IconChevronDown size={24} />
@@ -58,6 +64,8 @@ export default function RadialControlMenu(){
               top: "50%",
               transform: "translateY(-50%)",
             }}
+            className={styles.button}
+            disabled={status === "active"}
             onClick={() => control("pan_left")}
           >
             <IconChevronLeft size={24} />
@@ -73,6 +81,8 @@ export default function RadialControlMenu(){
               top: "50%",
               transform: "translateY(-50%)",
             }}
+            className={styles.button}
+            disabled={status === "active"}
             onClick={() => control("pan_right")}
           >
             <IconChevronRight size={24} />
@@ -88,6 +98,7 @@ export default function RadialControlMenu(){
                 bd={"2px solid #434b57"}
                   w={110}
                   h={110}
+                  className={styles.button}
                   onClick={() => control("resume")}
                 >
                 <IconPlayerPlay size={30} />
@@ -100,6 +111,7 @@ export default function RadialControlMenu(){
                 bd={"2px solid #434b57"}
                   w={110}
                   h={110}
+                  className={styles.button}
                   onClick={() => control("stop")}
                 >
                 <IconPlayerStop size={30} />
