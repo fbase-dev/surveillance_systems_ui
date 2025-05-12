@@ -17,10 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript />
+        <ColorSchemeScript defaultColorScheme="dark" forceColorScheme="dark" />
       </head>
       <body>
-        <MantineProvider theme={appTheme}>
+        <MantineProvider theme={appTheme} defaultColorScheme="dark" forceColorScheme="dark">
         <NextTopLoader showSpinner={false} color="#14B8FF" />
           {children}
         </MantineProvider>

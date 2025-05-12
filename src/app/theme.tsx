@@ -134,6 +134,7 @@ export const theme = createTheme({
         Text: {
           defaultProps: {
             fz: { xl: "var(--xl-font-size)" },
+            color: "gray.1"
           },
         },
         Card: {
