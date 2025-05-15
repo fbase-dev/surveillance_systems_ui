@@ -45,15 +45,9 @@ export default function RadarSection() {
         top={0}
         left={0}
       >
-        <Metric title={"Speed"} value={`${speed||"--- ---"} kn`} />
+        <Metric title={"Speed"} value={`${speed||"10"} kn`} />
         <Metric title={"Orientation"} value="NE" textAlign="right" />
       </Flex>
-      {/* {
-        selectedVessel === ownAisData ? 
-        <ShipRadar heading={heading} />:
-        // @ts-ignore
-        <ShipRadar lat_dir={selectedVessel.lat_dir} lon_dir={selectedVessel.lon_dir} />
-      } */}
       <ShipRadar heading={heading} />
       <Flex
         justify={"space-between"}
