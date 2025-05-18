@@ -1,11 +1,14 @@
+import { useRadio } from "@/contexts/RadioContext";
 import { Slider, Group, Select, ActionIcon } from "@mantine/core";
 import { IconPlayerPlay, IconPlayerSkipForward, IconPlayerSkipBack, IconVolume, IconChevronDown } from "@tabler/icons-react";
 import { useState } from "react";
 
-export default function FrequencyControl() {
+export default function RadioControl() {
+  const {status} = useRadio();
+  console.log(status);
+  
   const [frequency, setFrequency] = useState(100);
   const [mode, setMode] = useState<string|null>("HF");
-
   const marks = [
     { value: 99, label: "99" },
     { value: 100, label: "100" },

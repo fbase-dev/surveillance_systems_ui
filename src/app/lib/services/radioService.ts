@@ -1,7 +1,7 @@
 import axios from "axios";
 import { radio_endpoints } from "../endpoints";
 
-const API_BASE = "/api/camera?path=";
+const API_BASE = "/api/radio?path=";
 
 export const getRadioStatus = () =>
   axios.get(`${API_BASE}${radio_endpoints.radio_status}`);
