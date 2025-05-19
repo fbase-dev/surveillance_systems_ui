@@ -14,17 +14,23 @@ export const turnRadioOff = () =>
 
 export const getRadioFrequency = async () => {
   await axios.get(`${API_BASE}${radio_endpoints.trigger_frequency}`);
-  return axios.get(`${API_BASE}${radio_endpoints.get_frequency}`);
+  await new Promise(resolve => setTimeout(resolve, 8000));
+  const response = axios.get(`${API_BASE}${radio_endpoints.get_frequency}`);
+  return response;
 };
 
 export const getRadioOpMode = async () =>{
-    axios.get(`${API_BASE}${radio_endpoints.trigger_frequency}`);
-    return axios.get(`${API_BASE}${radio_endpoints.get_op_mode}`);
+  await axios.get(`${API_BASE}${radio_endpoints.trigger_op_mode}`);
+  await new Promise(resolve => setTimeout(resolve, 15000));
+  const response = axios.get(`${API_BASE}${radio_endpoints.get_op_mode}`);
+  return response;
 };
 
-export const getRadioVolume = async() =>{
-    axios.get(`${API_BASE}${radio_endpoints.trigger_volume}`)
-    return axios.get(`${API_BASE}${radio_endpoints.get_volume}`);
+export const getRadioVolume = async () => {
+  await axios.get(`${API_BASE}${radio_endpoints.trigger_volume}`);
+  await new Promise(resolve => setTimeout(resolve, 8000));
+  const response = await axios.get(`${API_BASE}${radio_endpoints.get_volume}`);
+  return response;
 };
 
 export const setRadioVolume = (value:number) =>

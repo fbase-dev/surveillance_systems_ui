@@ -12,7 +12,6 @@ export const useRadioHook = () => {
     const [volumeVisible, setVolumeVisibility] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
     const skipNextUpdate = useRef(false); 
-    const modeSkipNextUpdate = useRef(false);
     const freqSkipNextUpdate = useRef(false);
     const [frequencyUnit, setFrequencyUnit] = useState<'MHz' | 'kHz'>('MHz');
 
@@ -86,7 +85,7 @@ export const useRadioHook = () => {
                 message: "Radio volume updated successfully.",
                 color: "#40c057",
             })
-            }, 6000);
+            }, 8000);
         })
         .catch((err) => {
             console.error("Failed to set volume", err);
@@ -143,7 +142,7 @@ export const useRadioHook = () => {
     
     const onModeChange = async(mode:string)=>{
         setLoading(true);
-        mode && await setRadioOpMode(mode)
+        await setRadioOpMode(mode)
             .then(()=>{
                 setTimeout(()=>{
                     fetchRadioModes();
@@ -154,7 +153,7 @@ export const useRadioHook = () => {
                         color: "#40c057",
                     })
                     setLoading(false);
-                }, 6000)
+                }, 8000)
             })
             .catch((err) => {
                 console.error("Failed to set mode", err);
@@ -240,7 +239,7 @@ export const useRadioHook = () => {
 
         setRadioFrequency(frequency)
             .then(()=>setTimeout(() => {
-                // fetchRadioFrequency();
+                fetchRadioFrequency();
                 notifications.show({
                     position: "top-right",
                     title: "Frequency Updated",
@@ -248,7 +247,7 @@ export const useRadioHook = () => {
                     color: "#40c057",
                 })
                 setLoading(false);
-            }, 6000)
+            }, 8000)
         )
     };
 
