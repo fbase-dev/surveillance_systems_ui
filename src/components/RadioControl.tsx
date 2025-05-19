@@ -1,10 +1,10 @@
 import { useRadio } from "@/contexts/RadioContext";
-import { Slider, Group, ActionIcon, LoadingOverlay, MultiSelect, Stack, NumberInput, Switch, TextInput, Text } from "@mantine/core";
+import { Slider, Group, ActionIcon, LoadingOverlay, Stack, Switch, TextInput, Text, Select, Badge } from "@mantine/core";
 import { IconVolume, IconPower } from "@tabler/icons-react";
 import { ModeOptions } from "@/types/ModeMap";
 
 export default function RadioControl() {
-  const {status, loading, modes, volumeVisible, volume, frequencyUnit, frequency, setFrequency, setVolume, setVolumeVisibility, onRadio, offRadio, setModes} = useRadio();
+  const {status, loading, mode, modes, volumeVisible, volume, frequencyUnit, frequency, setFrequency, setVolume, setVolumeVisibility, onRadio, offRadio, setMode} = useRadio();
 
   return (
     <Group gap="md" align="center" w={"100%"} justify="space-between" pos={"relative"}>
@@ -31,38 +31,51 @@ export default function RadioControl() {
             <IconVolume />
           </ActionIcon>
           <Stack gap={5}>
-            <NumberInput
-            size="xs"
-            value={volume}
-            onChange={(value) => setVolume(value as number)}
-            min={0}
-            max={100}
-            clampBehavior="strict"
-            allowDecimal
-          />
+            {/* <NumberInput
+              size="xs"
+              value={volume}
+              onChange={(value) => {
+                const number = value as number;
+                if (number % 5 === 0) {
+                  setVolume(number);
+                }else{
+                  setVolume(volume)
+                }
+              }}
+              min={0}
+              max={60}
+              clampBehavior="strict"
+              step={5}
+            /> */}
 
           <Slider
-            size="xs"
+            inverted
+            size="lg"
             color="blue"
             value={volume}
             onChange={setVolume}
             min={0}
-            max={100}
-            miw={100}
+            max={60}
+            miw={200}
             w="100%"
+            restrictToMarks
+            marks={Array.from({ length: 12 }).map((_, index) => ({ value: index * 5 }))}
           />
           </Stack>
         </Group>
       </Stack>
 
       <Stack>
-        <Text c={"gray.4"}>Mode</Text>
-        <MultiSelect
+        <Group gap={"xs"}>
+          <Text c={"gray.4"}>Modes:</Text>
+          {modes.map((mode)=><Badge key={mode} color="teal">{mode}</Badge>)}
+        </Group>
+        <Select
           size="md"
-          value={modes}
-           onChange={setModes}
+          value={mode}
+          onChange={setMode}
           data= {ModeOptions}
-          maxValues={2}
+          placeholder="Select a mode"
         />
       </Stack>
 

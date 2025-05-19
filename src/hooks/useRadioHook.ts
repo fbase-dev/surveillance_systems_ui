@@ -6,12 +6,14 @@ import { notifications } from "@mantine/notifications";
 export const useRadioHook = () => {
     const [status, setStatus] = useState<string>();
     const [frequency, setFrequency] = useState<string>('000.30000');
+    const [mode, setMode] = useState<string|null>("")
     const [modes , setModes] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [volumeVisible, setVolumeVisibility] = useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0);
     const skipNextUpdate = useRef(false); 
     const modeSkipNextUpdate = useRef(false);
+    const freqSkipNextUpdate = useRef(false);
     const [frequencyUnit, setFrequencyUnit] = useState<'MHz' | 'kHz'>('MHz');
 
     useEffect(()=>{
@@ -34,29 +36,36 @@ export const useRadioHook = () => {
     const fetchRadioFrequency = ()=>{
         getRadioFrequency()
             .then((res)=> {
-                setFrequency(res.data?.latest);
+                const newFrequency = res.data.latest;
+                if(newFrequency !== frequency){
+                    freqSkipNextUpdate.current = true;
+                    setFrequency(newFrequency);
+                }
+            })
+            .catch((err) => {
+            console.error("Failed to fetch radio frequency", err);
+        });
+    };
+
+    const fetchRadioModes = () => {
+        getRadioOpMode()
+            .then((res) => {
+            const newModes = res.data.modes;
+            setModes(newModes);
+            })
+            .catch((err) => {
+            console.error("Failed to fetch radio modes", err);
             });
     };
 
-    const fetchRadioModes = ()=>{
-        getRadioOpMode()
-            .then((res)=>{
-                const newModes = res.data.modes;
-                if(newModes !== modes){
-                    modeSkipNextUpdate.current = true;
-                    setModes(newModes)
-                }
-                setModes(res.data.modes);
-            });
-    };
 
     const fetchRadioVolume = () => {
         getRadioVolume()
         .then((res) => {
             const newVolume = res.data.level;
             if (newVolume !== volume) {
-            skipNextUpdate.current = true;
-            setVolume(newVolume);
+                skipNextUpdate.current = true;
+                setVolume(newVolume);
             }
         })
         .catch((err) => {
@@ -69,7 +78,7 @@ export const useRadioHook = () => {
         setRadioVolume(value)
         .then(() => {
             setTimeout(() => {
-            fetchRadioVolume();
+            // fetchRadioVolume();
             setLoading(false);
             notifications.show({
                 position: "top-right",
@@ -132,9 +141,9 @@ export const useRadioHook = () => {
     };
 
     
-    const onModeChange = async(modes:string[])=>{
+    const onModeChange = async(mode:string)=>{
         setLoading(true);
-        await Promise.all(modes.map((mode) => setRadioOpMode(mode)))
+        mode && await setRadioOpMode(mode)
             .then(()=>{
                 setTimeout(()=>{
                     fetchRadioModes();
@@ -153,24 +162,24 @@ export const useRadioHook = () => {
             });
     };
 
-    const [debouncedModes] = useDebouncedValue(modes, 3000);
-    useEffect(()=>{
-        if(modeSkipNextUpdate.current){
-            modeSkipNextUpdate.current = false;
+    const [debouncedMode] = useDebouncedValue(mode, 1);
+    useEffect(() => {
+        if (debouncedMode) {
+            onModeChange(debouncedMode);
+        }
+    }, [debouncedMode]);
+
+
+    const [debouncedFrequency] = useDebouncedValue(frequency, 3000);
+    useEffect(() => {
+        if(freqSkipNextUpdate.current){
+            freqSkipNextUpdate.current = false;
             return;
         }
-        onModeChange(debouncedModes);
-    }, [debouncedModes]);
+        onFrequencyChange(debouncedFrequency)
+    }, [debouncedFrequency]);
 
-    useEffect(() => {
-        if (!frequency) return;
-        const timeout = setTimeout(() => {
-            onFrequencyChange();
-        }, 2000);
-        return () => clearTimeout(timeout);
-    }, [frequency]);
-
-    const onFrequencyChange = () => {
+    const onFrequencyChange = (frequency:string) => {
         setLoading(true);
         
         const [major, minor] = (frequency)?.toString().split('.');
@@ -231,7 +240,7 @@ export const useRadioHook = () => {
 
         setRadioFrequency(frequency)
             .then(()=>setTimeout(() => {
-                fetchRadioFrequency();
+                // fetchRadioFrequency();
                 notifications.show({
                     position: "top-right",
                     title: "Frequency Updated",
@@ -251,6 +260,7 @@ export const useRadioHook = () => {
         volumeVisible,
         volume,
         frequencyUnit,
+        mode, setMode,
         onFrequencyChange,
         setFrequencyUnit,
         setVolume,
