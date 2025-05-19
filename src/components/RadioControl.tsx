@@ -1,60 +1,82 @@
 import { useRadio } from "@/contexts/RadioContext";
-import { Slider, Group, Select, ActionIcon } from "@mantine/core";
-import { IconPlayerPlay, IconPlayerSkipForward, IconPlayerSkipBack, IconVolume, IconChevronDown } from "@tabler/icons-react";
-import { useState } from "react";
+import { Slider, Group, ActionIcon, LoadingOverlay, MultiSelect, Stack, NumberInput, Switch, TextInput, Text } from "@mantine/core";
+import { IconVolume, IconPower } from "@tabler/icons-react";
+import { ModeOptions } from "@/types/ModeMap";
 
 export default function RadioControl() {
-  const {status} = useRadio();
-  console.log(status);
-  
-  const [frequency, setFrequency] = useState(100);
-  const [mode, setMode] = useState<string|null>("HF");
-  const marks = [
-    { value: 99, label: "99" },
-    { value: 100, label: "100" },
-    { value: 101, label: "101" },
-    { value: 102, label: "102" },
-    { value: 103, label: "103" },
-  ];
+  const {status, loading, modes, volumeVisible, volume, frequencyUnit, frequency, setFrequency, setVolume, setVolumeVisibility, onRadio, offRadio, setModes} = useRadio();
 
   return (
-    <Group gap="md" align="center" w={"100%"} justify="space-between">
-      <ActionIcon size="lg" variant="light" radius="xl" color="blue.6">
-        <IconPlayerSkipBack />
-      </ActionIcon>
+    <Group gap="md" align="center" w={"100%"} justify="space-between" pos={"relative"}>
+      <LoadingOverlay visible={loading} m={"-md"} zIndex={1000} overlayProps={{ radius: "sm", blur: 4, color: "rgba(3, 14, 27, 1)" }} loaderProps={{ color: 'blue', type: 'bars' }}/>
 
-      <ActionIcon size="xl" variant="light" radius="xl" color="blue.6">
-        <IconPlayerPlay />
-      </ActionIcon>
+      <Stack>
+        <Text c={"gray.4"}>
+          Power
+        </Text>
+        <Switch
+          size="xl"
+          color="green"
+          checked={status === "on"}
+          onChange={() => status === "on" ? offRadio() : onRadio()}
+          onLabel={<IconPower size={16} stroke={2.5} color="white" />}
+          offLabel={<IconPower size={16} stroke={2.5} color="red" />}
+        />
+      </Stack>
 
-      <ActionIcon size="lg" variant="light" radius="xl" color="blue.6">
-        <IconPlayerSkipForward />
-      </ActionIcon>
+      <Stack>
+        <Text c={"gray.4"}>Volume</Text>
+        <Group pos={"relative"} align="center" justify="center">
+          <ActionIcon size="xl" variant="light" radius="xs" onClick={()=>setVolumeVisibility(!volumeVisible)}>
+            <IconVolume />
+          </ActionIcon>
+          <Stack gap={5}>
+            <NumberInput
+            size="xs"
+            value={volume}
+            onChange={(value) => setVolume(value as number)}
+            min={0}
+            max={100}
+            clampBehavior="strict"
+            allowDecimal
+          />
 
-      <Slider
-        value={frequency}
-        onChange={setFrequency}
-        min={99}
-        max={103}
-        step={0.1}
-        marks={marks}
-        label={(value) => `${value.toFixed(1)} MHz`}
-        size="sm"
-        w={600}
-      />
+          <Slider
+            size="xs"
+            color="blue"
+            value={volume}
+            onChange={setVolume}
+            min={0}
+            max={100}
+            miw={100}
+            w="100%"
+          />
+          </Stack>
+        </Group>
+      </Stack>
 
-      <ActionIcon size="xl" variant="light" radius="xs">
-        <IconVolume />
-      </ActionIcon>
+      <Stack>
+        <Text c={"gray.4"}>Mode</Text>
+        <MultiSelect
+          size="md"
+          value={modes}
+           onChange={setModes}
+          data= {ModeOptions}
+          maxValues={2}
+        />
+      </Stack>
 
-      <Select
-      size="md"
-        value={mode}
-        onChange={setMode}
-        data={["HF", "VHF", "UHF"]}
-        rightSection={<IconChevronDown size={14} />}
-        w={80}
-      />
+      <Stack>
+        <Text c={"gray.4"}>Frequency</Text>
+          <TextInput
+            size="md"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value.replace(/[^0-9.]/g, '')) }
+            placeholder={frequencyUnit === 'MHz' ? '145.33345' : '000.33345'}
+            w={200}
+            rightSection={<Text me={"sm"}>{frequencyUnit}</Text>}
+          />
+      </Stack>
     </Group>
   );
 }

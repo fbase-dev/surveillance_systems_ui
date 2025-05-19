@@ -2,6 +2,7 @@ import '@/styles/app.css';
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps, mergeMantineTheme, DEFAULT_THEME } from '@mantine/core';
 import NextTopLoader from 'nextjs-toploader';
 import {theme} from "@/app/theme";
+import { Notifications } from '@mantine/notifications';
 
 export const metadata = {
   title: 'Fieldbase Surveillance App',
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body>
         <MantineProvider theme={appTheme} defaultColorScheme="dark" forceColorScheme="dark">
         <NextTopLoader showSpinner={false} color="#14B8FF" />
+        <Notifications />
           {children}
         </MantineProvider>
       </body>

@@ -1,0 +1,1 @@
+export  const ModeOptions = ["LSB" , "USB" , "AM" , "CW" , "RTTY" , "FM" , "WFM" , "CW-R" , "RTTY-R" , "DV"]
