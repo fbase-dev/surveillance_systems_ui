@@ -381,5 +381,19 @@ export const theme = createTheme({
             fz: { xl: "var(--xl-font-size)" },
           },
         },
+        Notification: {
+          defaultProps:{
+            bg: "#FAF9F6",
+            styles:{
+              description:{
+                color: "#030E1BE5"
+              },
+              title:{
+                color: "#030E1BE5",
+                fontWeight: "bold"
+              }
+            }
+          }
+        }
       }
 });

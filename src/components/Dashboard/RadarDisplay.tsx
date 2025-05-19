@@ -65,16 +65,13 @@ const RadarDisplay: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setSweepAngle((prev) => (prev + 1) % 360);
-    }, 100);
+    }, 60);
     return () => clearInterval(interval);
   }, []);
 
-  // const sweepX = canvasSize / 2 + (canvasSize / 2) * Math.sin(toRadians(sweepAngle));
-  // const sweepY = canvasSize / 2 - (canvasSize / 2) * Math.cos(toRadians(sweepAngle));
-
   return (
-    <Card p={0}>
-      <BackgroundImage src={mapUrl} style={{backgroundColor: "#030E1B80", backgroundBlendMode: "overlay"}} >
+    <Card p={0} h={canvasSize + 20} bg={"#030E1B80"}>
+      <BackgroundImage src={mapUrl} style={{backgroundColor: "#030E1B80", backgroundBlendMode: "overlay"}} my={"auto"} >
         <div style={{ position: "relative", width: canvasSize, margin: "auto" }}>
           <Container>
             <Stage width={canvasSize} height={canvasSize}>
@@ -126,6 +123,7 @@ const RadarDisplay: React.FC = () => {
                 <Text text="E" x={canvasSize - 10} y={canvasSize / 2 - 5} fontSize={10} fill="white" />
 
                 {/* Ship icon at center with heading */}
+                
                 {/* {shipIcon && (
                   <KonvaImage
                     image={shipIcon}
