@@ -1,5 +1,5 @@
 import { useVideoFeed } from "@/hooks/useVideoFeed";
-import { Card, Image, Title } from "@mantine/core";
+import { Card, Title } from "@mantine/core";
 import Link from "next/link";
 
 export default function CamCard() {
@@ -10,15 +10,16 @@ export default function CamCard() {
             Cam 1
         </Title>
         {!(streamURL === "") && (
-            <Image
-            ref={videoRef}
-            src={streamURL}
-            alt="Live Stream"
-            w={"100%"}
-            h={"100%"}
-            fit="cover"
-            display={"block"}
-            flex={1}
+            <img
+              src={streamURL}
+              alt="Live Stream"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+                flex: 1,
+              }}
             />
         )}
     </Card>
