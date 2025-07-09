@@ -4,8 +4,7 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 
-# RUN apk add --no-cache libc6-compat
-RUN apk add --no-cache libc6-compat python3 make g++ 
+RUN apk add --no-cache libc6-compat python3 make g++ pkg-config cairo-dev pango-dev pixman-dev
 
 WORKDIR /app
 
@@ -33,7 +32,6 @@ RUN \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i - frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
 fi
-
 
  # Production image, copy all the files and run next
 FROM base AS runner
