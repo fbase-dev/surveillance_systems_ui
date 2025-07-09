@@ -1,45 +1,23 @@
 import { Card, Title, Center, Loader } from "@mantine/core";
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 
 type CamCardProps = {
   title: string;
   streamUrl: string;
   height?: string | number;
   onClick?: () => void;
-  reviveInterval?: number;
 };
 
 export default function CamCard({
   title,
   streamUrl,
   height = "40vh",
-  reviveInterval = 180000,
   onClick,
 }: CamCardProps) {
   const [reloadKey, setReloadKey] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const buildUrl = () => {
-    if (reloadKey) {
-      return `${streamUrl}?reload=${reloadKey}`;
-    }
-    return streamUrl;
-  };
-
-  useEffect(() => {
-    // Start watchdog interval
-    intervalRef.current = setInterval(() => {
-      console.log(`Auto-refreshing ${title} stream`);
-      setReloadKey(Date.now());
-    }, reviveInterval);
-
-    return () => {
-      // Clean up on unmount
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [reviveInterval, title]);
 
   const handleLoad = () => {
     setLoading(false);
@@ -112,7 +90,7 @@ export default function CamCard({
 
       {reloadKey && (
         <img
-          src={buildUrl()}
+          src={streamUrl}
           alt="Live Stream"
           style={{
             width: "100%",
