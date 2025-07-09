@@ -8,7 +8,6 @@ export const useLocations = () => {
   const fetchLocations = () => {
     getLocations().then((res) => {
       setLocation(res.data?.[0]);
-      console.log(res.data);
     });
   };
 

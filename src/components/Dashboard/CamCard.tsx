@@ -7,6 +7,6 @@ export default function DashboardCamCard() {
   const router = useRouter();
 
   return (
-    <CamCard title="Cam 1" streamUrl={streamURLs?.stream_1||""} onClick={()=> router.push("/admin/cameras")} />
+    <CamCard title="Cam 1" streamUrl={streamURLs.stream_1} onClick={()=> router.push("/admin/cameras")} />
   );
 }

@@ -8,15 +8,7 @@ import PositionForm from "./PositionForm";
 
 export default function CameraModal() {
   const { modalOpened, modalHandler } = useCamera();
-  const { streamURLs } = useVideoFeed();
-  const [modalReloadKey, setModalReloadKey] = useState(Date.now());
-
-  useEffect(() => {
-    if (modalOpened) {
-      setModalReloadKey(Date.now());  // new reload key each time modal opens
-    }
-  }, [modalOpened]);
-
+  const {streamURLs} = useVideoFeed();
   return (
     <Modal
       opened={modalOpened}
@@ -37,10 +29,9 @@ export default function CameraModal() {
         <Paper miw={"70%"}>
             <CamCard
                 height={"83vh"}
-                streamUrl={streamURLs?.stream_1 || ""}
-                externalReloadKey={modalReloadKey}
-                objectFit="contain"
-                withBorder={false}
+                streamUrl={streamURLs.stream_1}
+                // objectFit="contain"
+                // withBorder={false}
                 title=""
                 />
         </Paper>
