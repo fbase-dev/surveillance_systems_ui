@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { camera_control_endpoints } from "../app/lib/endpoints";
 
 type StreamUrls = {
@@ -8,10 +8,17 @@ type StreamUrls = {
 };
 export const useVideoFeed = () => {
   const videoRef = useRef<HTMLImageElement>(null);
-  const baseUrl = process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL;
+  const [baseUrl, setBaseUrl] = useState("");
 
-  console.log(baseUrl);
-  
+  useEffect(() => {
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        setBaseUrl(data.cameraUrl);
+      });
+  }, []);
+
   const streamURLs: StreamUrls = {
     stream_1: `${baseUrl}${camera_control_endpoints.stream_1}`,
     stream_2: `${baseUrl}${camera_control_endpoints.stream_2}`,

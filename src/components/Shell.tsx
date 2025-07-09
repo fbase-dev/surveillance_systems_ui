@@ -3,7 +3,7 @@
 import { ActionIcon, AppShell, Avatar, Burger, Flex, Group, Image, NavLink } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { navItems } from "@/utils/navItems";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { usePathname } from 'next/navigation'
 import { IconBell, IconVolumeOff } from "@tabler/icons-react";
 import Link from "next/link";
@@ -12,7 +12,15 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 export default function Shell({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const url = usePathname()
-  console.log(process.env.NEXT_PUBLIC_MAP_API_KEY)
+  const [mapApiKey, setMapApiKey] = useState("");
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => {
+        setMapApiKey(data.mapApiKey);
+      });
+  }, []);
   return (
     <AppShell
       header={{ height: {base: 60, xl: 100} }}
@@ -71,7 +79,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <APIProvider apiKey={process.env.NEXT_PUBLIC_MAP_API_KEY||""}>
+        <APIProvider apiKey={mapApiKey}>
           {children}
         </APIProvider>
       </AppShell.Main>
