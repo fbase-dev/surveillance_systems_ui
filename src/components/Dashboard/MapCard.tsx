@@ -5,7 +5,6 @@ import Link from "next/link";
 
 export default function MapCard() {
   const { location } = useDashboard();
-  console.log(location);
   
   return (
     <Card h={"40vh"} p={0} pos={"relative"}  component={Link} href={"/admin/navigation"}>
