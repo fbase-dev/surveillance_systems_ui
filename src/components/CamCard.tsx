@@ -1,5 +1,5 @@
 import { Card, Title, Center, Loader } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type CamCardProps = {
   title: string;
@@ -18,6 +18,9 @@ export default function CamCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  useEffect(() => {
+    setReloadKey(Date.now());
+  }, []);
 
   const handleLoad = () => {
     setLoading(false);
