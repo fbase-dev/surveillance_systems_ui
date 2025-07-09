@@ -7,8 +7,6 @@ export async function GET(request: Request) {
     }
   
     const apiUrl = `${process.env.NEXT_PUBLIC_API_AIS_URL}${path}`;
-
-    console.log(apiUrl);
   
     try{
       const response = await fetch(apiUrl, {
