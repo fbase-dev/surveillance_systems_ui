@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { camera_control_endpoints } from "../app/lib/endpoints";
 
 type StreamUrls = {

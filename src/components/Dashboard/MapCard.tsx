@@ -1,5 +1,4 @@
 import { useDashboard } from "@/contexts/DashboardContext";
-import { useLocations } from "@/hooks/useLocations";
 import { Card, Title } from "@mantine/core";
 import { Map, AdvancedMarker } from "@vis.gl/react-google-maps";
 import Link from "next/link";

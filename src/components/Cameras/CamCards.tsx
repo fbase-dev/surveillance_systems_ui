@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useCamera } from "@/contexts/CameraControlContext";
 import { useVideoFeed } from "@/hooks/useVideoFeed";
 import { SimpleGrid } from "@mantine/core";

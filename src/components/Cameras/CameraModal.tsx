@@ -1,7 +1,6 @@
 import { useCamera } from "@/contexts/CameraControlContext";
 import { useVideoFeed } from "@/hooks/useVideoFeed";
 import { Flex, Modal, Paper, Stack } from "@mantine/core";
-import { useState, useEffect } from "react";
 import CamCard from "../CamCard";
 import CameraControls from "./CameraControls";
 import PositionForm from "./PositionForm";
