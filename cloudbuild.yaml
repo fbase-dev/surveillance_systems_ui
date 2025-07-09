@@ -23,7 +23,7 @@ steps:
       ##optional
       - '--allow-unauthenticated'
       - '--set-secrets'
-      - 'NEXT_PUBLIC_API_AIS_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_AIS_URL/versions/latest, NEXT_PUBLIC_API_CAMERA_CONTROL_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_CAMERA_CONTROL_URL/versions/latest, NEXT_PUBLIC_API_RADIO_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_RADIO_URL/versions/latest, NEXT_PUBLIC_P_ANYWHERE=projects/183968704272/secrets/NEXT_PUBLIC_P_ANYWHERE/versions/latest, NEXT_PUBLIC_MAP_API_KEY=projects/183968704272/secrets/NEXT_PUBLIC_MAP_API_KEY/versions/latest, NEXT_PUBLIC_MAP_ID=projects/183968704272/secrets/NEXT_PUBLIC_MAP_ID/versions/latest, NEXT_PUBLIC_MAPBOX_TOKEN=projects/183968704272/secrets/NEXT_PUBLIC_MAPBOX_TOKEN/versions/latest, '
+      - 'NEXT_PUBLIC_API_AIS_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_AIS_URL/versions/latest, NEXT_PUBLIC_API_CAMERA_CONTROL_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_CAMERA_CONTROL_URL/versions/latest, NEXT_PUBLIC_API_RADIO_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_RADIO_URL/versions/latest, NEXT_PUBLIC_P_ANYWHERE=projects/183968704272/secrets/NEXT_PUBLIC_P_ANYWHERE/versions/latest, NEXT_PUBLIC_MAP_API_KEY=projects/183968704272/secrets/NEXT_PUBLIC_MAP_API_KEY/versions/latest, NEXT_PUBLIC_MAP_ID=projects/183968704272/secrets/NEXT_PUBLIC_MAP_ID/versions/latest, NEXT_PUBLIC_MAPBOX_TOKEN=projects/183968704272/secrets/NEXT_PUBLIC_MAPBOX_TOKEN/versions/latest'
 
 options:
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
