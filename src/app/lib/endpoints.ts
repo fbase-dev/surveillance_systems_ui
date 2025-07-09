@@ -29,3 +29,7 @@ export const radio_endpoints = {
   get_volume: "/get_squelch_level",
   set_frequency: "/set_command?command=set_frequency"
 }
+
+export const locations_enpoints = {
+  get_locations: "/api/locations",
+}
