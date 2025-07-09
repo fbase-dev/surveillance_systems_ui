@@ -1,0 +1,50 @@
+import { useCamera } from "@/contexts/CameraControlContext";
+import { useVideoFeed } from "@/hooks/useVideoFeed";
+import { Flex, Modal, Paper, Stack } from "@mantine/core";
+import { useState, useEffect } from "react";
+import CamCard from "../CamCard";
+import CameraControls from "./CameraControls";
+import PositionForm from "./PositionForm";
+
+export default function CameraModal() {
+  const { modalOpened, modalHandler } = useCamera();
+  const { streamURLs } = useVideoFeed();
+  const [modalReloadKey, setModalReloadKey] = useState(Date.now());
+
+  useEffect(() => {
+    if (modalOpened) {
+      setModalReloadKey(Date.now());  // new reload key each time modal opens
+    }
+  }, [modalOpened]);
+
+  return (
+    <Modal
+      opened={modalOpened}
+      onClose={modalHandler.close}
+      fullScreen
+      title="Camera Control"
+      styles={{
+        body:{
+            padding: 0
+        }
+      }}
+    >
+      <Flex justify={"space-around"} align={"center"}>
+        <Stack my={"md"}>
+            <PositionForm />
+            <CameraControls />
+        </Stack>
+        <Paper miw={"70%"}>
+            <CamCard
+                height={"83vh"}
+                streamUrl={streamURLs?.stream_1 || ""}
+                externalReloadKey={modalReloadKey}
+                objectFit="contain"
+                withBorder={false}
+                title=""
+                />
+        </Paper>
+      </Flex>
+    </Modal>
+  );
+};

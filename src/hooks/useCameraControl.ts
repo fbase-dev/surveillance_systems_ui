@@ -31,7 +31,6 @@ export const useCameraControl = () => {
       positionForm.reset();
       await fetchCachePosition();  //update position
       await fetchStatus(); // update status
-      modalHandler.close(); //close modal
     } catch (error){
       console.error("Failed to send camera position:", error)
     }

@@ -1,5 +1,5 @@
 "use client"
-import CamCard from "@/components/Dashboard/CamCard";
+import DashboardCamCard from "@/components/Dashboard/CamCard";
 import DetailsCard from "@/components/Dashboard/DetailsCard";
 import RadioCard from "@/components/Dashboard/RadioCard";
 import MapCard from "@/components/Dashboard/MapCard";
@@ -31,9 +31,8 @@ export default function Dashboard(){
                     <GridCol span={8}>
                         <Stack gap={"md"}>
                             <RadarDisplay />
-                            {/* <HeroSection /> */}
                             <SimpleGrid cols={2} spacing={"md"}>
-                                <CamCard />
+                                <DashboardCamCard />
                                 <MapCard />
                             </SimpleGrid>
                             <RadioCard />

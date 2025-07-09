@@ -1,22 +1,20 @@
 import { useCamera } from "@/contexts/CameraControlContext";
 import {
   Button,
+  Card,
+  Divider,
   Group,
-  Modal,
   NumberInput,
   Stack,
+  Title,
 } from "@mantine/core";
 
-export default function PositionFormModal() {
-  const { modalHandler, modalOpened, positionForm, submitPositionForm, loading } = useCamera();
+export default function PositionForm() {
+  const { positionForm, submitPositionForm, loading } = useCamera();
   return (
-    <Modal
-      opened={modalOpened}
-      onClose={modalHandler.close}
-      title="Set Camera Custom Position"
-      closeOnEscape={false}
-      withCloseButton={false}
-    >
+    <Card w={400}>
+      <Title order={5}>Manual Control</Title>
+      <Divider my={"md"} />
       <form onSubmit={positionForm.onSubmit(submitPositionForm)}>
         <Stack gap={"md"}>
           <NumberInput
@@ -43,10 +41,9 @@ export default function PositionFormModal() {
         </Stack>
 
         <Group justify="flex-end" mt="md">
-          <Button disabled={loading} color={"red"}>Close</Button>
           <Button loading={loading} type="submit">Submit</Button>
         </Group>
       </form>
-    </Modal>
+    </Card>
   );
 }

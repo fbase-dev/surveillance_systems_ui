@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       });
     }
 
-    if (path === "/video_feed") {
+    if (path.includes("/video_feed")) {
       // Stream MJPEG as-is
       return new Response(upstreamResponse.body, {
         status: upstreamResponse.status,
