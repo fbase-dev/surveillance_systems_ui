@@ -3,7 +3,7 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 
-RUN apk add --no-cache libc6-compat python3 make g++ pkgconfig cairo-dev
+RUN apk add --no-cache libc6-compat python3 make g++ pkgconfig cairo-dev pango-dev pixman-dev
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Add build tools and Python again for the builder stage (if 'npm run build' needs them)
-RUN apk add --no-cache python3 make g++ pkgconfig cairo-dev pango-dev pixman-dev
+#RUN apk add --no-cache python3 make g++ pkgconfig cairo-dev pango-dev pixman-dev
 
 
 # Next.js collects completely anonymous telemetry data about general usage.
