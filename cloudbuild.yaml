@@ -1,0 +1,32 @@
+steps:
+  # Build the image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-east1-docker.pkg.dev/$PROJECT_ID/fbase-offshore-portal-cloudrun/fbase-offshore-portal:$COMMIT_SHA', '.']
+  
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-east1-docker.pkg.dev/$PROJECT_ID/fbase-offshore-portal-cloudrun/fbase-offshore-portal:$COMMIT_SHA']
+
+  ## Deploy image to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'fbase-offshore-portal-cloudrun'
+      - '--image'
+      - 'us-east1-docker.pkg.dev/$PROJECT_ID/fbase-offshore-portal-cloudrun/fbase-offshore-portal:$COMMIT_SHA'
+      - '--region'
+      - 'us-east1'
+      - '--platform'
+      - 'managed'
+      ##optional
+      - '--allow-unauthenticated'
+      - '--set-secrets'
+      - 'NEXT_PUBLIC_API_AIS_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_AIS_URL/versions/latest, NEXT_PUBLIC_API_CAMERA_CONTROL_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_CAMERA_CONTROL_URL/versions/latest, NEXT_PUBLIC_API_RADIO_URL=projects/183968704272/secrets/NEXT_PUBLIC_API_RADIO_URL/versions/latest, NEXT_PUBLIC_P_ANYWHERE=projects/183968704272/secrets/NEXT_PUBLIC_P_ANYWHERE/versions/latest, NEXT_PUBLIC_MAP_API_KEY=projects/183968704272/secrets/NEXT_PUBLIC_MAP_API_KEY/versions/latest, NEXT_PUBLIC_MAP_ID=projects/183968704272/secrets/NEXT_PUBLIC_MAP_ID/versions/latest, NEXT_PUBLIC_MAPBOX_TOKEN=projects/183968704272/secrets/NEXT_PUBLIC_MAPBOX_TOKEN/versions/latest, '
+
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+
+images:
+  - 'us-east1-docker.pkg.dev/$PROJECT_ID/fbase-offshore-portal-cloudrun/fbase-offshore-portal:$COMMIT_SHA'
