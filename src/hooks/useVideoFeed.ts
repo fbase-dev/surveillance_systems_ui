@@ -9,8 +9,6 @@ type StreamUrls = {
 export const useVideoFeed = () => {
   const videoRef = useRef<HTMLImageElement>(null);
   const baseUrl = process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL;
-
-  console.log(baseUrl);
   
   const streamURLs: StreamUrls = {
     stream_1: `${baseUrl}${camera_control_endpoints.stream_1}`,
