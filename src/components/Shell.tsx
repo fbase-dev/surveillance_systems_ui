@@ -79,9 +79,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <APIProvider apiKey={mapApiKey}>
-          {children}
-        </APIProvider>
+        {mapApiKey ? (
+          <APIProvider apiKey={mapApiKey}>
+            {children}
+          </APIProvider>
+        ) : (
+          <div>Loading...</div>
+        )}
       </AppShell.Main>
     </AppShell>
   );

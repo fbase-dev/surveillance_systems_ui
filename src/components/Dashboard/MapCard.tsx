@@ -20,16 +20,20 @@ export default function MapCard() {
       <Title order={3} pos={"absolute"} top={5} left={10} style={{zIndex: 1}} m={0}>
         Map
       </Title>
-      <Map
-        defaultZoom={14}
-        zoomControl={true}
-        defaultCenter={{ lat: location?.latitude, lng: location?.longitude }}
-        disableDefaultUI={true}
-        fullscreenControl={true}
-        mapId={mapApiId}
-      >
-        <AdvancedMarker position={{ lat: location?.latitude, lng: location?.longitude }} />
-      </Map>
+      {
+        mapApiId ?
+          <Map
+          defaultZoom={14}
+          zoomControl={true}
+          defaultCenter={{ lat: location?.latitude, lng: location?.longitude }}
+          disableDefaultUI={true}
+          fullscreenControl={true}
+          mapId={mapApiId}
+        >
+          <AdvancedMarker position={{ lat: location?.latitude, lng: location?.longitude }} />
+        </Map>:
+        <div style={{height: "100%", width: "100%", justifyContent: "center", alignItems: "center"}}>Loading map...</div>
+      }
     </Card>
   );
 }

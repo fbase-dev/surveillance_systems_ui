@@ -14,7 +14,6 @@ export const useVideoFeed = () => {
     fetch("/api/config")
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setBaseUrl(data.cameraUrl);
       });
   }, []);

@@ -152,7 +152,7 @@ export default function VesselsMap() {
     initializeMap();
   }, [isLoaded, targetLocations, lon, lat]);
 
-  if (!isLoaded) {
+  if (!isLoaded || !mapApiId) {
     return <div>Loading...</div>;
   }
 
