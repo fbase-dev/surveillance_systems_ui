@@ -5,6 +5,7 @@ import Link from "next/link";
 
 export default function MapCard() {
   const { location } = useDashboard();
+  console.log(location);
   
   return (
     <Card h={"40vh"} p={0} pos={"relative"}  component={Link} href={"/admin/navigation"}>
@@ -14,12 +15,12 @@ export default function MapCard() {
       <Map
         defaultZoom={14}
         zoomControl={true}
-        defaultCenter={{ lat: location?.latitude || 4.792575, lng: location?.longitude || 7.021782 }}
+        defaultCenter={{ lat: location?.latitude, lng: location?.longitude }}
         disableDefaultUI={true}
         fullscreenControl={true}
         mapId={process.env.NEXT_PUBLIC_MAP_ID}
       >
-        <AdvancedMarker position={{ lat: location?.latitude || 0, lng: location?.longitude || 0 }} />
+        <AdvancedMarker position={{ lat: location?.latitude, lng: location?.longitude }} />
       </Map>
     </Card>
   );
