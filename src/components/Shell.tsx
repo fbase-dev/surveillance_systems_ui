@@ -12,7 +12,7 @@ import { APIProvider } from "@vis.gl/react-google-maps";
 export default function Shell({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const url = usePathname()
-
+  console.log(process.env.NEXT_PUBLIC_MAP_API_KEY)
   return (
     <AppShell
       header={{ height: {base: 60, xl: 100} }}
