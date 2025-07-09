@@ -68,8 +68,8 @@ const CamCard = ({
             buffer = tmp;
 
             // Look for JPEG SOI/EOI markers (0xFFD8 to 0xFFD9)
-            let start = buffer.indexOf(0xffd8);
-            let end = buffer.indexOf(0xffd9, start + 2);
+            const start = buffer.indexOf(0xffd8);
+            const end = buffer.indexOf(0xffd9, start + 2);
 
             if (start !== -1 && end !== -1) {
               const frame = buffer.slice(start, end + 2);
