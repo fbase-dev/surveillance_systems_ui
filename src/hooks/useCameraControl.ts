@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getCameraPosition,
   pauseCamera,
+  resetCamera,
   resumeCamera,
   sendCameraMovement,
   setCameraPosition,
@@ -73,11 +74,11 @@ export const useCameraControl = () => {
     setLoading(true);
     try{
       await(sendCameraMovement(direction));
-      await fetchCachePosition();
-      await fetchStatus();
     }catch (error) {
       console.log(error)
     }finally{
+      await fetchCachePosition();
+      await fetchStatus();
       setLoading(false);
     }
   };
@@ -86,11 +87,11 @@ export const useCameraControl = () => {
     setLoading(true);
     try{
       await pauseCamera();
-      await fetchCachePosition();
-      await fetchStatus();
     }catch (error) {
       console.log (error)
     }finally {
+      await fetchCachePosition();
+      await fetchStatus();
       setLoading(true);
     }
   };
@@ -99,14 +100,27 @@ export const useCameraControl = () => {
     setLoading(true);
     try{
       await resumeCamera();
-      await fetchCachePosition();
-      await fetchStatus();
     }catch (error) {
       console.log (error)
     }finally {
+      await fetchCachePosition();
+      await fetchStatus();
       setLoading(true);
     }
   };
+
+  const reset = async () => {
+    setLoading(true);
+    try{
+      await resetCamera();
+    }catch (error) {
+      console.log (error)
+    }finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  }
 
 
   // Fetch the stastus of the camera
@@ -135,6 +149,7 @@ export const useCameraControl = () => {
     pause,
     resume,
     move,
+    reset,
     fetchCachePosition,
     // fetchLivePosition,
     submitPositionForm

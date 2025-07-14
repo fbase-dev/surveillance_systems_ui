@@ -1,12 +1,13 @@
 import { useCamera } from "@/contexts/CameraControlContext";
 import { useVideoFeed } from "@/hooks/useVideoFeed";
-import { Flex, Modal, Paper, Stack } from "@mantine/core";
+import { Button, Flex, Modal, Paper, Stack } from "@mantine/core";
 import CamCard from "../CamCard";
 import CameraControls from "./CameraControls";
 import PositionForm from "./PositionForm";
+import { IconRefresh } from "@tabler/icons-react";
 
 export default function CameraModal() {
-  const { modalOpened, modalHandler } = useCamera();
+  const { modalOpened, modalHandler, reset } = useCamera();
   const {streamURLs} = useVideoFeed();
   return (
     <Modal
@@ -22,6 +23,7 @@ export default function CameraModal() {
     >
       <Flex justify={"space-around"} align={"center"}>
         <Stack my={"md"} gap={"md"}>
+            <Button onClick={reset} leftSection={<IconRefresh />} variant="subtle">Reset Position</Button>
             <PositionForm />
             <CameraControls />
         </Stack>

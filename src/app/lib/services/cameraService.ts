@@ -21,6 +21,8 @@ export const pauseCamera = () =>
 export const resumeCamera = () => 
   axios.get(`${API_BASE}${camera_control_endpoints.control}resume`);
 
+export const resetCamera = () => 
+  axios.get(`${API_BASE}${camera_control_endpoints.reset}`);
 
 export const setCameraPosition = async (params: CameraPosition) => {
   const payload = new URLSearchParams({
