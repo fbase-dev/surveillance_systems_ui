@@ -8,7 +8,7 @@ import {
 } from "../app/lib/services/cameraService";
 import { getCameraStatus } from "@/app/lib/services/aisService";
 import { useDisclosure } from "@mantine/hooks";
-import { useForm } from '@mantine/form';
+import { isInRange, useForm } from '@mantine/form';
 import { CameraPosition } from "@/types/CameraPosition";
 
 export const useCameraControl = () => {
@@ -19,11 +19,17 @@ export const useCameraControl = () => {
   
   const positionForm = useForm<CameraPosition>({
     mode: "uncontrolled",
+    validateInputOnChange: true,
+    validateInputOnBlur: true,
     initialValues:{
       pan: position.pan,
       tilt: position.tilt,
       // zoom: position.zoom
-    }
+    },
+    validate: {
+        pan: isInRange({min:0, max:90}, "Pan must be between 0 and 90"),
+        tilt: isInRange({min:0, max:90}, "Tilt must be between 0 and 90"),
+    },
   })
 
   const submitPositionForm = async(values: typeof positionForm.values)=>{
@@ -31,10 +37,12 @@ export const useCameraControl = () => {
     try{
       await setCameraPosition(values);
       positionForm.reset();
-      await fetchCachePosition();  //update position
-      await fetchStatus(); // update status
+      
     } catch (error){
       console.error("Failed to send camera position:", error)
+    }finally{
+      await fetchCachePosition();  //update position
+      await fetchStatus(); // update status
     }
     setLoading(false);
   }

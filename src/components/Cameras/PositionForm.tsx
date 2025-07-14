@@ -21,6 +21,8 @@ export default function PositionForm() {
             withAsterisk
             label="Pan"
             placeholder="0.00°"
+            min={0}
+            max={90}
             key={positionForm.key("pan")}
             {...positionForm.getInputProps("pan")}
           />
@@ -28,6 +30,8 @@ export default function PositionForm() {
             withAsterisk
             label="Tilt"
             placeholder="0.00°"
+            min={0}
+            max={50}
             key={positionForm.key("tilt")}
             {...positionForm.getInputProps("tilt")}
           />
