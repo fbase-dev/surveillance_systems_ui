@@ -16,10 +16,10 @@ export default function PositionCard() {
       </Text>
       <Text me={"md"}>{position.tilt||"-- --"}°</Text>
 
-      <Text fw={"bold"} me={"xs"}>
+      {/* <Text fw={"bold"} me={"xs"}>
         Zoom:
       </Text>
-      <Text me={"md"}>{position.zoom||"-- --"}</Text>
+      <Text me={"md"}>{position.zoom||"-- --"}</Text> */}
     </Flex>
   );
 }

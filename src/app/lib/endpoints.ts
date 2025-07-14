@@ -6,13 +6,13 @@ export const ais_endpoints = {
 };
 
 export const camera_control_endpoints = {
-  stream_1: "/video_feed",
-  stream_2: "/video_feed2",
-  stream_3: "/video_feed3",
-  manual_position: "/current_position",
-  live_position: "/current_positionn",
-  control: "/control",
-  status: "/status"
+  manual_position: "/status",
+  // live_position: "/current_positionn",
+  move: "/move?direction=",
+  control: "/control?command=",
+  status: "/status",
+  reset: "/startup",
+  set_position: "/goto"
 }
 
 export const radio_endpoints = {

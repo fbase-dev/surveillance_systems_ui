@@ -21,7 +21,7 @@ export default function CameraModal() {
       }}
     >
       <Flex justify={"space-around"} align={"center"}>
-        <Stack my={"md"}>
+        <Stack my={"md"} gap={"md"}>
             <PositionForm />
             <CameraControls />
         </Stack>

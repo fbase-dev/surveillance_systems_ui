@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 type CamCardProps = {
   title: string;
-  streamUrl: string;
+  streamUrl: string|undefined;
   height?: string | number;
   onClick?: () => void;
 };

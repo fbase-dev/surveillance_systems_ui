@@ -43,6 +43,49 @@ export async function GET(request: Request) {
   }
 }
 
+// export async function POST(request: Request) {
+//   const { searchParams } = new URL(request.url);
+//   const path = searchParams.get("path");
+//   console.log(path);
+  
+//   if (!path) {
+//     return new Response("Path is required", { status: 400 });
+//   }
+
+//   const apiUrl = `${process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL}${path}`;
+
+//   try {
+//     const body = await request.formData();
+//     const encodedBody = new URLSearchParams(body as any).toString(); 
+
+//     const upstreamResponse = await fetch(apiUrl, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/x-www-form-urlencoded',
+//       },
+//       body: encodedBody,
+//     });
+
+//     // Handle 204 No Content gracefully
+//     if (upstreamResponse.status === 204) {
+//       // Return a simple success message
+//       return new Response(null, { status: 204 });
+//     }
+
+//     // If the response has content (non-204 status), forward it
+//     const responseText = await upstreamResponse.text();
+//     return new Response(responseText, {
+//       status: upstreamResponse.status,
+//       headers: {
+//         'Content-Type': 'text/plain',
+//       },
+//     });
+//   } catch (error) {
+//     console.error("API Proxy POST Error:", error);
+//     return new Response("Error forwarding request", { status: 500 });
+//   }
+// }
+
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get("path");
@@ -54,24 +97,28 @@ export async function POST(request: Request) {
   const apiUrl = `${process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL}${path}`;
 
   try {
-    const body = await request.formData();
-    const encodedBody = new URLSearchParams(body as any).toString(); 
+    const formData = await request.formData();
+
+    const jsonBody: Record<string, any> = {};
+    formData.forEach((value, key) => {
+      if (typeof value === "string") {
+        const parsedValue = isNaN(Number(value)) ? value : Number(value);
+        jsonBody[key] = parsedValue;
+      }
+    });
 
     const upstreamResponse = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
       },
-      body: encodedBody,
+      body: JSON.stringify(jsonBody),
     });
 
-    // Handle 204 No Content gracefully
     if (upstreamResponse.status === 204) {
-      // Return a simple success message
       return new Response(null, { status: 204 });
     }
 
-    // If the response has content (non-204 status), forward it
     const responseText = await upstreamResponse.text();
     return new Response(responseText, {
       status: upstreamResponse.status,
@@ -84,3 +131,5 @@ export async function POST(request: Request) {
     return new Response("Error forwarding request", { status: 500 });
   }
 }
+
+

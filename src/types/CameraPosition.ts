@@ -1,5 +1,5 @@
 export type CameraPosition = {
   pan: number;
   tilt: number;
-  zoom: number;
+  // zoom: number;
 };

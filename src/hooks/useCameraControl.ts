@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   getCameraPosition,
-  getLiveTrackingPosition,
-  sendCameraCommand,
+  pauseCamera,
+  resumeCamera,
+  sendCameraMovement,
+  setCameraPosition,
 } from "../app/lib/services/cameraService";
 import { getCameraStatus } from "@/app/lib/services/aisService";
 import { useDisclosure } from "@mantine/hooks";
@@ -10,24 +12,24 @@ import { useForm } from '@mantine/form';
 import { CameraPosition } from "@/types/CameraPosition";
 
 export const useCameraControl = () => {
-  const [position, setPosition] = useState<CameraPosition>({ pan: 0, tilt: 0, zoom: 0 }); // store camera position
+  const [position, setPosition] = useState<CameraPosition>({ pan: 0, tilt: 0}); // store camera position
   const [status, setStatus] = useState<string>(""); //store camera status
   const [modalOpened, modalHandler] = useDisclosure(false); // manage position form modal
   const [loading, setLoading] = useState<boolean>(false);
   
-  const positionForm = useForm<Partial<CameraPosition>>({
+  const positionForm = useForm<CameraPosition>({
     mode: "uncontrolled",
     initialValues:{
       pan: position.pan,
       tilt: position.tilt,
-      zoom: position.zoom
+      // zoom: position.zoom
     }
   })
 
   const submitPositionForm = async(values: typeof positionForm.values)=>{
     setLoading(true);
     try{
-      await sendCameraCommand("set_position", values);
+      await setCameraPosition(values);
       positionForm.reset();
       await fetchCachePosition();  //update position
       await fetchStatus(); // update status
@@ -49,27 +51,55 @@ export const useCameraControl = () => {
   };
 
    // Fetch the live position of the camera
-   const fetchLivePosition = async () => {
-    try {
-      const response = await getLiveTrackingPosition(); 
-      setPosition(response.data);
-    } catch (error) {
-      console.error("Error fetching live position", error);
+  //  const fetchLivePosition = async () => {
+  //   try {
+  //     const response = await getLiveTrackingPosition(); 
+  //     setPosition(response.data);
+  //   } catch (error) {
+  //     console.error("Error fetching live position", error);
+  //   }
+  // };
+
+  // Control the camera (send commands like pan, tilt, zoom)
+  const move = async (direction:string)=>{
+    setLoading(true);
+    try{
+      await(sendCameraMovement(direction));
+      await fetchCachePosition();
+      await fetchStatus();
+    }catch (error) {
+      console.log(error)
+    }finally{
+      setLoading(false);
     }
   };
 
-  // Control the camera (send commands like pan, tilt, zoom)
-  const control = async (action: string, extra?: Record<string, any>) => {
+  const pause = async () => {
     setLoading(true);
-    try {
-      await sendCameraCommand(action, extra);
-      await fetchCachePosition(); 
+    try{
+      await pauseCamera();
+      await fetchCachePosition();
       await fetchStatus();
-    } catch (error) {
-      console.error("Error controlling camera", error);
+    }catch (error) {
+      console.log (error)
+    }finally {
+      setLoading(true);
     }
-    setLoading(false);
   };
+
+  const resume = async () => {
+    setLoading(true);
+    try{
+      await resumeCamera();
+      await fetchCachePosition();
+      await fetchStatus();
+    }catch (error) {
+      console.log (error)
+    }finally {
+      setLoading(true);
+    }
+  };
+
 
   // Fetch the stastus of the camera
   const fetchStatus = async () => {
@@ -94,9 +124,11 @@ export const useCameraControl = () => {
     modalHandler,
     positionForm,
     loading,
-    control,
+    pause,
+    resume,
+    move,
     fetchCachePosition,
-    fetchLivePosition,
+    // fetchLivePosition,
     submitPositionForm
   };
 };

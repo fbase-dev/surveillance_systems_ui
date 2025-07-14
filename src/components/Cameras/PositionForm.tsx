@@ -31,13 +31,13 @@ export default function PositionForm() {
             key={positionForm.key("tilt")}
             {...positionForm.getInputProps("tilt")}
           />
-          <NumberInput
+          {/* <NumberInput
             withAsterisk
             label="Zoom"
             placeholder="0.00"
             key={positionForm.key("zoom")}
             {...positionForm.getInputProps("zoom")}
-          />
+          /> */}
         </Stack>
 
         <Group justify="flex-end" mt="md">

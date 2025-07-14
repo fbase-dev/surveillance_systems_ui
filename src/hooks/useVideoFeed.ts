@@ -1,27 +1,26 @@
 import { useEffect, useRef, useState } from "react";
-import { camera_control_endpoints } from "../app/lib/endpoints";
+import { Config } from "@/types/Config";
 
 type StreamUrls = {
-  stream_1: string;
-  stream_2: string;
-  stream_3: string;
+  stream_1?: string;
+  stream_2?: string;
+  stream_3?: string;
 };
+
 export const useVideoFeed = () => {
   const videoRef = useRef<HTMLImageElement>(null);
-  const [baseUrl, setBaseUrl] = useState("");
+  const [config, setConfig] = useState<Config>();
 
   useEffect(() => {
     fetch("/api/config")
       .then((res) => res.json())
-      .then((data) => {
-        setBaseUrl(data.cameraUrl);
-      });
+      .then((data) => setConfig(data));
   }, []);
 
   const streamURLs: StreamUrls = {
-    stream_1: `${baseUrl}${camera_control_endpoints.stream_1}`,
-    stream_2: `${baseUrl}${camera_control_endpoints.stream_2}`,
-    stream_3: `${baseUrl}${camera_control_endpoints.stream_3}`,
+    stream_1: config?.videoFeed1||undefined,
+    stream_2: config?.videoFeed2||undefined,
+    stream_3: config?.videoFeed3||undefined,
   };
 
   return { videoRef, streamURLs };

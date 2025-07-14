@@ -4,14 +4,14 @@ import { IconPlus, IconMinus } from "@tabler/icons-react";
 import styles from "@/styles/camera.module.css";
 
 export default function PanControl() {
-  const { control, status } = useCamera();
+  const { move, status } = useCamera();
 
   return (
     <Stack gap={"xs"}>
       <ActionIcon
         size={"lg"}
         color="#030E1BE5"
-        onClick={() => control("zoom_in")}
+        onClick={() => move("zoom_in")}
         disabled={status === "active"}
         className={styles.button}
       >
@@ -20,7 +20,7 @@ export default function PanControl() {
       <ActionIcon
         size={"lg"}
         color="#030E1BE5"
-        onClick={() => control("zoom_out")}
+        onClick={() => move("zoom_out")}
         disabled={status === "active"}
         className={styles.button}
       >
