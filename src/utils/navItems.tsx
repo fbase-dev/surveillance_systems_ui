@@ -21,6 +21,7 @@ export const navItems: {
         icon: <IconCamera size={25} />,
         href: "/admin/cameras",
     },
+    
     // {
     //     name: "Reports",
     //     icon: <IconNote  size={25}/>,
