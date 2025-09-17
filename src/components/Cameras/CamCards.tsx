@@ -18,15 +18,7 @@ export default function CamCards() {
         streamUrl={streamURLs.stream_1}
         onClick={modalHandler.open}
       />
-      <CamCard
-        title="Cam 2"
-        streamUrl={streamURLs.stream_2}
-
-      />
-      <CamCard
-        title="Cam 3"
-        streamUrl={streamURLs.stream_2}
-      />
+     
     </SimpleGrid>
   );
 }
