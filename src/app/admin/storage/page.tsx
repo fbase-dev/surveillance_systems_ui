@@ -19,8 +19,7 @@ import {
     Paper,
     Loader,
     Menu,
-    rem,
-    Divider
+    rem
 } from '@mantine/core';
 import {
     IconDownload,
@@ -33,7 +32,7 @@ import {
     IconDots,
     IconInfoCircle,
     IconCheck,
-    IconX
+    
 } from '@tabler/icons-react';
 
 interface FileDetails {
@@ -129,7 +128,7 @@ export default function StoragePage() {
         }
     };
 
-    // Download/Play file
+   
     const downloadFile = (fileName: string) => {
         if (typeof window !== 'undefined') {
             const url = `/api/storage?action=download&path=videoes/${fileName}`;
@@ -153,7 +152,7 @@ export default function StoragePage() {
             });
 
             if (response.ok) {
-                await fetchFiles(); // Refresh the list
+                await fetchFiles(); 
                 setError('');
                 setDeleteConfirmOpen(false);
                 setFileToDelete(null);
@@ -167,36 +166,35 @@ export default function StoragePage() {
     };
 
 
-    const renameFile = async () => {
-        if (!newFileName.trim() || !selectedFile) return;
+const renameFile = async () => {
+    if (!newFileName.trim() || !selectedFile) return;
 
-        try {
-            const response = await fetch('/api/files/rename', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'rename',
-                    old_path: `videoes/${selectedFile}`,
-                    new_name: newFileName
-                })
-            });
+    try {
+        const response = await fetch('/api/files/rename', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                old_path: `videoes/${selectedFile}`, 
+                new_name: newFileName              
+            }),
+        });
 
-            if (response.ok) {
-                setRenameModalOpen(false);
-                setNewFileName('');
-                setSelectedFile(null);
-                await fetchFiles();
-                setError('');
-            } else {
-                throw new Error('Failed to rename file');
-            }
-        } catch (err) {
-            setError('Failed to rename file');
-            console.error('Failed to rename file:', err);
+        if (response.ok) {
+            setRenameModalOpen(false);
+            setNewFileName('');
+            setSelectedFile(null);
+            await fetchFiles();
+            setError('');
+        } else {
+            throw new Error('Failed to rename file');
         }
-    };
+    } catch (err) {
+        setError('Failed to rename file');
+        console.error('Failed to rename file:', err);
+    }
+};
 
 
 
@@ -345,7 +343,7 @@ export default function StoragePage() {
                                                                 Rename
                                                             </Menu.Item>
 
-                                                            <Menu.Divider />
+                                                          
 
                                                             <Menu.Item
                                                                 color="red"
@@ -378,7 +376,7 @@ export default function StoragePage() {
                 >
                     <Stack>
                         <Text>
-                            Are you sure you want to delete "{fileToDelete}"? This action cannot be undone.
+                            Are you sure you want to delete {fileToDelete}? This action cannot be undone.
                         </Text>
 
                         <Group justify="flex-end" mt="md">
