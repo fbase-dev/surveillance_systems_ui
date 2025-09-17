@@ -197,8 +197,6 @@ const renameFile = async () => {
 };
 
 
-
-
     const extractDate = (fileName: string): string => {
         const match = fileName.match(/(\d{8}_\d{6})/);
         if (match) {
@@ -363,8 +361,6 @@ const renameFile = async () => {
                         </Table.ScrollContainer>
                     )}
                 </Card>
-
-
                 <Modal
                     size="auto"
                     opened={deleteConfirmOpen}
