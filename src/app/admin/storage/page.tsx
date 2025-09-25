@@ -197,16 +197,6 @@ export default function StoragePage() {
     };
 
 
-    const extractDate = (fileName: string): string => {
-        const match = fileName.match(/(\d{8}_\d{6})/);
-        if (match) {
-            const dateStr = match[1];
-            const date = dateStr.substring(0, 8);
-            const time = dateStr.substring(9);
-            return `${date.substring(0, 4)}-${date.substring(4, 6)}-${date.substring(6, 8)} ${time.substring(0, 2)}:${time.substring(2, 4)}:${time.substring(4, 6)}`;
-        }
-        return 'Unknown';
-    };
 
     useEffect(() => {
         fetchStatus();

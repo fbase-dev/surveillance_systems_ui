@@ -1,8 +1,7 @@
 "use client";
-import RadioControl from "@/components/RadioControl";
 import DetailsCard from "@/components/Navigation/DetailsCard";
 import { DashboardProvider } from "@/contexts/DashboardContext";
-import { Grid, GridCol, Paper, Tabs, Card, Center, Loader, Text, Stack } from "@mantine/core";
+import { Grid, GridCol, Tabs, Card, Center, Loader, Text,  } from "@mantine/core";
 import { RadioProvider } from "@/contexts/RadioContext";
 import { useState } from "react";
 import dynamic from 'next/dynamic';
