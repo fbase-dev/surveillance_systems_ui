@@ -308,7 +308,7 @@ const RadarDisplay: React.FC = () => {
 
  const handleTargetClick = useCallback((target: Target, x: number, y: number) => {
     const isSameTarget = tooltipTarget?.data?.target_number === target.target_number;
-    setSelectedVessel(target);
+    setSelectedVessel(target as AisData | Target);
     setTooltipTarget(isSameTarget ? null : { x, y, data: target });
 }, [tooltipTarget, setSelectedVessel]);
 
