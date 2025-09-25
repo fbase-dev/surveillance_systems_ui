@@ -32,7 +32,7 @@ import {
     IconDots,
     IconInfoCircle,
     IconCheck,
-    
+
 } from '@tabler/icons-react';
 
 interface FileDetails {
@@ -128,7 +128,7 @@ export default function StoragePage() {
         }
     };
 
-   
+
     const downloadFile = (fileName: string) => {
         if (typeof window !== 'undefined') {
             const url = `/api/storage?action=download&path=videoes/${fileName}`;
@@ -152,7 +152,7 @@ export default function StoragePage() {
             });
 
             if (response.ok) {
-                await fetchFiles(); 
+                await fetchFiles();
                 setError('');
                 setDeleteConfirmOpen(false);
                 setFileToDelete(null);
@@ -166,35 +166,35 @@ export default function StoragePage() {
     };
 
 
-const renameFile = async () => {
-    if (!newFileName.trim() || !selectedFile) return;
+    const renameFile = async () => {
+        if (!newFileName.trim() || !selectedFile) return;
 
-    try {
-        const response = await fetch('/api/files/rename', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                old_path: `videoes/${selectedFile}`, 
-                new_name: newFileName              
-            }),
-        });
+        try {
+            const response = await fetch('/api/files/rename', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    old_path: `videoes/${selectedFile}`,
+                    new_name: newFileName
+                }),
+            });
 
-        if (response.ok) {
-            setRenameModalOpen(false);
-            setNewFileName('');
-            setSelectedFile(null);
-            await fetchFiles();
-            setError('');
-        } else {
-            throw new Error('Failed to rename file');
+            if (response.ok) {
+                setRenameModalOpen(false);
+                setNewFileName('');
+                setSelectedFile(null);
+                await fetchFiles();
+                setError('');
+            } else {
+                throw new Error('Failed to rename file');
+            }
+        } catch (err) {
+            setError('Failed to rename file');
+            console.error('Failed to rename file:', err);
         }
-    } catch (err) {
-        setError('Failed to rename file');
-        console.error('Failed to rename file:', err);
-    }
-};
+    };
 
 
     const extractDate = (fileName: string): string => {
@@ -273,7 +273,7 @@ const renameFile = async () => {
                                 <Table.Thead>
                                     <Table.Tr>
                                         <Table.Th>File Name</Table.Th>
-                                        <Table.Th>Date Created</Table.Th>
+                                        {/* <Table.Th>Date Created</Table.Th> */}
                                         <Table.Th>Type</Table.Th>
                                         <Table.Th>Actions</Table.Th>
                                     </Table.Tr>
@@ -287,11 +287,11 @@ const renameFile = async () => {
                                                     <Text size="sm">{file}</Text>
                                                 </Group>
                                             </Table.Td>
-                                            <Table.Td>
+                                            {/* <Table.Td>
                                                 <Text size="sm" c="dimmed">
                                                     {extractDate(file)}
                                                 </Text>
-                                            </Table.Td>
+                                            </Table.Td> */}
                                             <Table.Td>
                                                 <Badge variant="light" size="sm">
                                                     {file.split('.').pop()?.toUpperCase() || 'UNKNOWN'}
@@ -341,7 +341,7 @@ const renameFile = async () => {
                                                                 Rename
                                                             </Menu.Item>
 
-                                                          
+
 
                                                             <Menu.Item
                                                                 color="red"
@@ -426,7 +426,7 @@ const renameFile = async () => {
                     </Stack>
                 </Modal>
 
-               
+
                 <Modal
                     opened={detailsModalOpen}
                     onClose={() => {
