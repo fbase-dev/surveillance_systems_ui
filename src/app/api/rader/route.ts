@@ -1,8 +1,8 @@
-// app/api/radar/route.ts
+
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const dataType = searchParams.get("type"); 
+  const dataType = searchParams.get("type");
 
   const baseUrl = 'https://camera-server-cloud-run-183968704272.us-central1.run.app';
 
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
           error: `Failed to fetch TTM data: ${response.statusText}`,
         }), { status: response.status, headers: { "Content-Type": "application/json" } });
       }
-      
+
       const data = await response.json();
       const ttmArray = Array.isArray(data) ? data : [data].filter(Boolean);
       const processedTTM = ttmArray
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
         timestamp: new Date().toISOString(),
       }), {
         status: 200,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache, no-store, must-revalidate",
         },
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
           error: `Failed to fetch TLL data: ${response.statusText}`,
         }), { status: response.status, headers: { "Content-Type": "application/json" } });
       }
-      
+
       const data = await response.json();
       const tllArray = Array.isArray(data) ? data : [data].filter(Boolean);
       const processedTLL = tllArray
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
         timestamp: new Date().toISOString(),
       }), {
         status: 200,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache, no-store, must-revalidate",
         },
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
           error: `Failed to fetch own vessel data: ${response.statusText}`,
         }), { status: response.status, headers: { "Content-Type": "application/json" } });
       }
-      
+
       const data = await response.json();
       const processedOwn = {
         latitude: Number(data?.latitude),
@@ -101,20 +101,20 @@ export async function GET(request: Request) {
         timestamp: new Date().toISOString(),
       }), {
         status: 200,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       });
     }
 
-    // Handle 'all' case - fetch everything in parallel
-    let apiUrls: { [key: string]: string } = {};
+    const apiUrls: { [key: string]: string } = {};
     if (dataType === 'all' || !dataType) {
       apiUrls.ttm = `${baseUrl}/tracking_data`;
       apiUrls.tll = `${baseUrl}/target_location_batch`;
       apiUrls.own = `${baseUrl}/ais_data/own`;
     }
+
 
     // Fetch all requested data types in parallel
     const fetchPromises = Object.entries(apiUrls).map(async ([key, url]) => {
@@ -180,7 +180,7 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     }), {
       status: 200,
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
@@ -192,7 +192,7 @@ export async function GET(request: Request) {
       success: false,
       error: "Internal server error",
       timestamp: new Date().toISOString(),
-    }), { 
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
