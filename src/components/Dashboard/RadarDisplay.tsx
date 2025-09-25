@@ -306,11 +306,11 @@ const RadarDisplay: React.FC = () => {
     }
   }, []);
 
- const handleTargetClick = useCallback((target: Target, x: number, y: number) => {
-    const isSameTarget = tooltipTarget?.data?.target_number === target.target_number;
-    setSelectedVessel(target as AisData | Target);
-    setTooltipTarget(isSameTarget ? null : { x, y, data: target });
-}, [tooltipTarget, setSelectedVessel]);
+//  const handleTargetClick = useCallback((target: Target, x: number, y: number) => {
+//     const isSameTarget = tooltipTarget?.data?.target_number === target.target_number;
+//     setSelectedVessel(target as AisData | Target);
+//     setTooltipTarget(isSameTarget ? null : { x, y, data: target });
+// }, [tooltipTarget, setSelectedVessel]);
 
   // Effects
   useEffect(() => {
@@ -599,7 +599,7 @@ const RadarDisplay: React.FC = () => {
                         strokeWidth={target.source === "ttm" ? 1 : 0}
                         onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
                         onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
-                        onClick={() => handleTargetClick(target, x, y)}
+                        // onClick={() => handleTargetClick(target, x, y)}
                       />
 
                       {/* Course Vector */}
