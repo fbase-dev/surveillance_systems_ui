@@ -1,7 +1,6 @@
-import { Stack, Card, Group, Text, Badge, Divider, CopyButton, ActionIcon } from "@mantine/core";
+import { Stack, Card, Group, Text, Badge,  CopyButton, ActionIcon } from "@mantine/core";
 import { IconCopy, IconMapPin, IconCompass, IconSend } from '@tabler/icons-react';
-import AboutSection from "./AboutSection";
-import ContactsSection from "./ContactsSection";
+
 import RadarSection from "../RadarSection";
 
 // Target interface

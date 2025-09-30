@@ -73,8 +73,6 @@ const DUMMY_AIS_DATA = {
   "timestamp": "2025-09-22T17:47:12Z"
 };
 
-
-
 // AIS Status Codes
 const AIS_STATUS = {
   0: "Under way using engine",
@@ -92,7 +90,7 @@ const AIS_STATUS = {
   12: "Power-driven vessel pushing ahead",
   13: "Reserved",
   14: "AIS-SART",
-  15: "Undefined"
+  15: "Reserved"
 };
 
 // Utility functions
