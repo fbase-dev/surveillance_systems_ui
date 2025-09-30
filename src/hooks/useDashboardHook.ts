@@ -8,8 +8,20 @@ import { useEffect, useState } from "react";
 import { useLocations } from "./useLocations";
 
 export const useDashboardHook = () => {
-  const [selectedVessel, setSelectedVessel] = useState<AisData | Target>({lat: 4.792575, lon: 7.021782, heading: 360.0, speed: "0.1"});
-  const [ownAisData, setOwnAisData] = useState<AisData>({lat: 4.792575, lon: 7.021782, heading: 360.0, speed: "0.1"});
+  const [selectedVessel, setSelectedVessel] = useState<AisData | Target>({
+    target_number: "0",
+    lat: 4.792575,
+    lon: 7.021782,
+    heading: 360.0,
+    speed: "0.1"
+  });
+  const [ownAisData, setOwnAisData] = useState<AisData>({
+    target_number: "0",
+    lat: 4.792575,
+    lon: 7.021782,
+    heading: 360.0,
+    speed: "0.1"
+  });
   const [targetLocations, setTargetLocations] = useState<Target[] | []>([]);
   const [loading, setLoading] = useState(true); //todo loading overlay
 
