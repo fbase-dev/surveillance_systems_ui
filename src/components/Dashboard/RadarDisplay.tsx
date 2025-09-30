@@ -73,7 +73,7 @@ const DUMMY_AIS_DATA = {
   "timestamp": "2025-09-22T17:47:12Z"
 };
 
-const USE_DUMMY_DATA = true;
+
 
 // AIS Status Codes
 const AIS_STATUS = {
