@@ -1,28 +1,21 @@
 import { useDashboard } from "@/contexts/DashboardContext";
-import { BackgroundImage, Card, Container, Popover, Group, Select, Badge, Text, Alert } from "@mantine/core";
+import { BackgroundImage, Card, Container, Popover, Group, Select, Badge, Text, Alert, Button } from "@mantine/core";
 import Konva from "konva";
 import dynamic from "next/dynamic";
 import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { Stage, Layer, Circle, Line, Text as KonvaText, Shape } from "react-konva";
 
 // Types
-interface TTMTarget {
-  targetId?: string;
-  target_number?: string;
+interface AISVessel {
+  mmsi: number;
   latitude: number;
   longitude: number;
   speed?: number;
   course?: number;
-  target_status?: string;
-  source: string;
-}
-
-interface TLLTarget {
-  targetId?: string;
-  target_number?: string;
-  latitude: number;
-  longitude: number;
-  target_status?: string;
+  heading?: number;
+  status?: number;
+  turn?: number;
+  accuracy?: boolean;
   source: string;
 }
 
@@ -34,7 +27,7 @@ interface OwnVesselData {
   course?: number;
 }
 
-interface Target extends TTMTarget, TLLTarget {
+interface Target extends AISVessel {
   lat?: number;
   lon?: number;
 }
@@ -49,8 +42,7 @@ interface TooltipTarget {
 const CANVAS_SIZE = 650;
 const SWEEP_SPEED = 60; // milliseconds
 const FETCH_INTERVALS = {
-  TTM: 5000,
-  TLL: 3000,
+  AIS: 3000,
   OWN: 2000,
 } as const;
 
@@ -64,9 +56,43 @@ const RADAR_RANGES = [
 
 // API Endpoints
 const RADAR_ENDPOINTS = {
-  TTM: 'https://camera-server-cloud-run-183968704272.us-central1.run.app/tracking_data',
-  TLL: 'https://camera-server-cloud-run-183968704272.us-central1.run.app/target_location_batch',
-  OWN: 'https://camera-server-cloud-run-183968704272.us-central1.run.app/ais_data/own'
+  AIS: 'https://camera-server-cloud-run-183968704272.us-central1.run.app/ais_data/other',
+  OWN: 'https://camera-server-cloud-run-183968704272.us-central1.run.app/ais_data/own',
+};
+
+const DUMMY_AIS_DATA = {
+  "batch": [
+    { "raw": "!AIVDM,1,1,,B,19kP2<?P00PP?OD2f93>4?vp2D1q,018", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657982000, "status": 15, "turn": -128.0, "speed": 0.0, "accuracy": true, "lon": 7.043377, "lat": 4.75522, "course": 360.0, "heading": 511, "second": 28, "maneuver": 0, "spare_1": "\x00", "raim": true, "radio": 82041 }, "decode_error": null },
+    { "raw": "!AIVDM,1,1,,B,19jmJn8P00PPAcj2fTbqR?w02@BT,073", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657283800, "status": 8, "turn": -128.0, "speed": 0.0, "accuracy": true, "lon": 7.050868, "lat": 4.767005, "course": 244.0, "heading": 511, "second": 32, "maneuver": 0, "spare_1": "\x00", "raim": true, "radio": 66724 }, "decode_error": null },
+    { "raw": "!AIVDM,1,1,,A,19jbPJ?0000PAi02fUTf436v06:p,073", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657105000, "status": 15, "turn": 0.0, "speed": 0.0, "accuracy": false, "lon": 7.051147, "lat": 4.76739, "course": 360.0, "heading": 99, "second": 31, "maneuver": 0, "spare_1": "\x00", "raim": false, "radio": 25272 }, "decode_error": null },
+    { "raw": "!AIVDM,1,1,,A,19jjso0P000PD:62h7KHcww62D1S,055", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657243100, "status": 0, "turn": -128.0, "speed": 0.0, "accuracy": false, "lon": 7.059312, "lat": 4.809142, "course": 222.3, "heading": 511, "second": 35, "maneuver": 0, "spare_1": "\x00", "raim": true, "radio": 82019 }, "decode_error": null },
+    { "raw": "!AIVDM,1,1,,B,19jhnb8000PPEmN2fj:t;FqB08H;,008", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657209000, "status": 8, "turn": 0.0, "speed": 0.0, "accuracy": true, "lon": 7.065038, "lat": 4.772765, "course": 311.7, "heading": 220, "second": 41, "maneuver": 0, "spare_1": "\x00", "raim": false, "radio": 34315 }, "decode_error": null },
+    { "raw": "!AIVDM,1,1,,B,19je9t00000PEaF2h2moVF3T0D1L,079", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657148400, "status": 0, "turn": 0.0, "speed": 0.0, "accuracy": false, "lon": 7.064392, "lat": 4.807185, "course": 194.5, "heading": 193, "second": 50, "maneuver": 0, "spare_1": "\x00", "raim": false, "radio": 82012 }, "decode_error": null },
+    { "raw": "!AIVDM,1,1,,B,19jeMo0P000PBMn2fVD>4?wJ2d1n,026", "decoded": { "msg_type": 1, "repeat": 0, "mmsi": 657153500, "status": 0, "turn": -128.0, "speed": 0.0, "accuracy": false, "lon": 7.053538, "lat": 4.767707, "course": 360.0, "heading": 511, "second": 45, "maneuver": 0, "spare_1": "\x00", "raim": true, "radio": 180342 }, "decode_error": null }
+  ],
+  "timestamp": "2025-09-22T17:47:12Z"
+};
+
+const USE_DUMMY_DATA = true;
+
+// AIS Status Codes
+const AIS_STATUS = {
+  0: "Under way using engine",
+  1: "At anchor",
+  2: "Not under command",
+  3: "Restricted maneuverability",
+  4: "Constrained by her draught",
+  5: "Moored",
+  6: "Aground",
+  7: "Engaged in fishing",
+  8: "Under way sailing",
+  9: "Reserved",
+  10: "Reserved",
+  11: "Power-driven vessel towing astern",
+  12: "Power-driven vessel pushing ahead",
+  13: "Reserved",
+  14: "AIS-SART",
+  15: "Undefined"
 };
 
 // Utility functions
@@ -117,30 +143,58 @@ const RadarDisplay: React.FC = () => {
   // State
   const [sweepAngle, setSweepAngle] = useState(0);
   const [tooltipTarget, setTooltipTarget] = useState<TooltipTarget | null>(null);
-  const [ttmData, setTtmData] = useState<TTMTarget[]>([]);
-  const [tllData, setTllData] = useState<TLLTarget[]>([]);
+  const [aisVessels, setAisVessels] = useState<AISVessel[]>([]);
   const [ownVesselData, setOwnVesselData] = useState<OwnVesselData | null>(null);
   const [radarRange, setRadarRange] = useState<number>(5);
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   // Context
-  const { selectedVessel, setSelectedVessel, targetLocations, ownAisData } = useDashboard();
+  const { selectedVessel, setSelectedVessel, ownAisData } = useDashboard();
 
   // Refs
   const intervalRefs = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
+  // Process AIS batch data
+  const processAISBatch = useCallback((data: any) => {
+    if (!data || !data.batch || !Array.isArray(data.batch)) {
+      console.warn('Invalid AIS data structure:', data);
+      return [];
+    }
+
+    return data.batch
+      .filter((item: any) => item.decoded && !item.decode_error)
+      .map((item: any) => {
+        const decoded = item.decoded;
+        return {
+          mmsi: decoded.mmsi,
+          latitude: decoded.lat,
+          longitude: decoded.lon,
+          speed: decoded.speed,
+          course: decoded.course,
+          heading: decoded.heading !== 511 ? decoded.heading : undefined, // 511 means heading not available
+          status: decoded.status,
+          turn: decoded.turn !== -128 ? decoded.turn : undefined, // -128 means turn not available
+          accuracy: decoded.accuracy,
+          source: 'ais'
+        };
+      })
+      .filter((vessel: AISVessel) =>
+        Number.isFinite(vessel.latitude) &&
+        Number.isFinite(vessel.longitude) &&
+        Math.abs(vessel.latitude) > 0.001 &&
+        Math.abs(vessel.longitude) > 0.001
+      );
+  }, []);
+
   // API functions
-  const fetchRadarData = useCallback(async (type: 'ttm' | 'tll' | 'own') => {
+  const fetchRadarData = useCallback(async (type: 'ais' | 'own') => {
     try {
       let endpoint: string;
 
       switch (type) {
-        case 'ttm':
-          endpoint = RADAR_ENDPOINTS.TTM;
-          break;
-        case 'tll':
-          endpoint = RADAR_ENDPOINTS.TLL;
+        case 'ais':
+          endpoint = RADAR_ENDPOINTS.AIS;
           break;
         case 'own':
           endpoint = RADAR_ENDPOINTS.OWN;
@@ -160,30 +214,17 @@ const RadarDisplay: React.FC = () => {
       const result = await response.json();
       console.log(`${type.toUpperCase()} response:`, result);
 
-      // Handle different response formats from the actual endpoints
-      if (type === 'own') {
-        // For AIS own vessel data, expect direct vessel data
-        console.log(`Processed ${type.toUpperCase()} data:`, result);
-        return result;
+      if (type === 'ais') {
+        return processAISBatch(result);
       } else {
-        // For radar data (TTM/TLL), check if there's a success field or return data directly
-        if (result.success !== undefined) {
-          if (!result.success) {
-            console.warn(`${type.toUpperCase()} API returned unsuccessful result:`, result.error);
-            return null;
-          }
-          console.log(`Processed ${type.toUpperCase()} data:`, result.data);
-          return result.data;
-        }
-        // If no success field, assume the result is the data itself
-        console.log(`Processed ${type.toUpperCase()} data:`, result);
+        // For own vessel data
         return result;
       }
     } catch (error) {
       console.error(`Error fetching ${type.toUpperCase()} data:`, error);
       return null;
     }
-  }, []);
+  }, [processAISBatch]);
 
   // Computed values
   const contextOwn = useMemo(() => {
@@ -206,41 +247,18 @@ const RadarDisplay: React.FC = () => {
     };
   }, [ownVesselData, contextOwn]);
 
-  const dashboardTargets = useMemo(() => {
-    if (!targetLocations) return [];
-
-    return targetLocations
-      .map((v: any) => ({
-        ...v,
-        source: "dashboard",
-        latitude: Number(v.lat),
-        longitude: Number(v.lon),
-      }))
-      .filter((v: any) => Number.isFinite(v.latitude) && Number.isFinite(v.longitude));
-  }, [targetLocations]);
-
   const allTargets = useMemo(() => {
-    const targets: Target[] = [];
-
-    // Add dashboard targets
-    targets.push(...dashboardTargets);
-
-    // Add TTM targets with source
-    targets.push(...ttmData.map(t => ({ ...t, source: 'ttm' })));
-
-    // Add TLL targets with source
-    targets.push(...tllData.map(t => ({ ...t, source: 'tll' })));
+    // Only include AIS vessels
+    const targets: Target[] = [...aisVessels];
 
     console.log('All targets computed:', {
       total: targets.length,
-      dashboard: dashboardTargets.length,
-      ttm: ttmData.length,
-      tll: tllData.length,
+      ais: aisVessels.length,
       targets: targets
     });
 
     return targets;
-  }, [dashboardTargets, ttmData, tllData]);
+  }, [aisVessels]);
 
   const hasOwnFix = useMemo(() => {
     return (
@@ -286,28 +304,23 @@ const RadarDisplay: React.FC = () => {
   // Helper functions
   const getTargetColor = useCallback((target: Target) => {
     const isSelected = selectedVessel &&
-      ((selectedVessel as any)?.targetId ?? (selectedVessel as any)?.target_number) ===
-      (target.targetId ?? target.target_number);
+      ((selectedVessel as any)?.mmsi) === target.mmsi;
 
     if (isSelected) return "orange";
-
-    switch (target.source) {
-      case "ttm": return "#ff6600";
-      case "tll": return "#00ffff";
-      default: return "yellow";
-    }
+    return "#00ff00"; // Green for AIS vessels
   }, [selectedVessel]);
 
-  const getTargetRadius = useCallback((target: Target) => {
-    switch (target.source) {
-      case "ttm": return 6;
-      case "tll": return 4;
-      default: return 5;
-    }
+  const getTargetRadius = useCallback(() => {
+    return 5; // Standard radius for AIS vessels
   }, []);
+
+  const getStatusDescription = useCallback((status?: number) => {
+    if (status === undefined || status === null) return "Unknown";
+    return AIS_STATUS[status as keyof typeof AIS_STATUS] || `Status ${status}`;
+  }, []);
+
   const handleTargetClick = useCallback((target: Target, x: number, y: number) => {
-    const isSameTarget = tooltipTarget?.data?.target_number === target.target_number ||
-      tooltipTarget?.data?.targetId === target.targetId;
+    const isSameTarget = tooltipTarget?.data?.mmsi === target.mmsi;
 
     if (setSelectedVessel) {
       setSelectedVessel(target as any);
@@ -315,6 +328,11 @@ const RadarDisplay: React.FC = () => {
 
     setTooltipTarget(isSameTarget ? null : { x, y, data: target });
   }, [tooltipTarget, setSelectedVessel]);
+
+  useEffect(() => {
+    const data = processAISBatch(DUMMY_AIS_DATA);
+    setAisVessels(data);
+  }, [processAISBatch]);
 
   // Effects
   useEffect(() => {
@@ -324,9 +342,6 @@ const RadarDisplay: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-
-
 
   useEffect(() => {
     const updateConnectionStatus = () => {
@@ -341,14 +356,12 @@ const RadarDisplay: React.FC = () => {
     // Initial data fetch
     const initializeData = async () => {
       try {
-        const [ttm, tll, own] = await Promise.all([
-          fetchRadarData('ttm'),
-          fetchRadarData('tll'),
+        const [ais, own] = await Promise.all([
+          fetchRadarData('ais'),
           fetchRadarData('own')
         ]);
 
-        if (ttm) setTtmData(Array.isArray(ttm) ? ttm : [ttm]);
-        if (tll) setTllData(Array.isArray(tll) ? tll : [tll]);
+        if (ais) setAisVessels(Array.isArray(ais) ? ais : [ais]);
         if (own) setOwnVesselData(own);
 
         updateConnectionStatus();
@@ -360,33 +373,19 @@ const RadarDisplay: React.FC = () => {
 
     initializeData();
 
-    // TTM data interval
-    intervalRefs.current.ttm = setInterval(async () => {
+    // AIS data interval
+    intervalRefs.current.ais = setInterval(async () => {
       try {
-        const data = await fetchRadarData('ttm');
+        const data = await fetchRadarData('ais');
         if (data) {
-          setTtmData(Array.isArray(data) ? data : [data]);
+          setAisVessels(Array.isArray(data) ? data : [data]);
           updateConnectionStatus();
         }
       } catch (error) {
-        console.error("Error fetching TTM data:", error);
+        console.error("Error fetching AIS data:", error);
         handleError();
       }
-    }, FETCH_INTERVALS.TTM);
-
-    // TLL data interval
-    intervalRefs.current.tll = setInterval(async () => {
-      try {
-        const data = await fetchRadarData('tll');
-        if (data) {
-          setTllData(Array.isArray(data) ? data : [data]);
-          updateConnectionStatus();
-        }
-      } catch (error) {
-        console.error("Error fetching TLL data:", error);
-        handleError();
-      }
-    }, FETCH_INTERVALS.TLL);
+    }, FETCH_INTERVALS.AIS);
 
     // Own vessel data interval
     intervalRefs.current.own = setInterval(async () => {
@@ -453,7 +452,7 @@ const RadarDisplay: React.FC = () => {
 
         <Group gap="md">
           <Text size="xs" c="white">
-            TTM: {ttmData.length} | TLL: {tllData.length} | Dashboard: {dashboardTargets.length}
+            AIS: {aisVessels.length}
           </Text>
           {lastUpdate && (
             <Text size="xs" c="white">
@@ -577,17 +576,28 @@ const RadarDisplay: React.FC = () => {
                     ? polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE)
                     : { x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 };
 
-                  const targetId = target.targetId || target.target_number || `${target.source?.toUpperCase()}-${idx}`;
+                  const targetId = target.mmsi || `${target.source?.toUpperCase()}-${idx}`;
                   const uniqueKey = `${target.source}-${targetId}-${idx}`;
 
-                  // Course vector for TTM targets
+                  // Course vector for AIS targets with valid course and speed
                   let courseVector: { x2: number; y2: number } | null = null;
-                  if (target.source === "ttm" && Number.isFinite(target.speed) && Number.isFinite(target.course)) {
+                  if (Number.isFinite(target.speed) && Number.isFinite(target.course) && target.speed! > 0.1) {
                     const vectorLength = Math.min(target.speed! * 3, 30);
                     const courseRad = toRadians(target.course!);
                     courseVector = {
                       x2: x + vectorLength * Math.sin(courseRad),
                       y2: y - vectorLength * Math.cos(courseRad),
+                    };
+                  }
+
+                  // Heading vector for AIS targets with valid heading
+                  let headingVector: { x2: number; y2: number } | null = null;
+                  if (Number.isFinite(target.heading)) {
+                    const headingLength = 15;
+                    const headingRad = toRadians(target.heading!);
+                    headingVector = {
+                      x2: x + headingLength * Math.sin(headingRad),
+                      y2: y - headingLength * Math.cos(headingRad),
                     };
                   }
 
@@ -597,42 +607,38 @@ const RadarDisplay: React.FC = () => {
                       <Circle
                         x={x}
                         y={y}
-                        radius={getTargetRadius(target)}
+                        radius={getTargetRadius()}
                         fill={getTargetColor(target)}
-                        stroke={target.source === "ttm" ? "#ff3300" : undefined}
-                        strokeWidth={target.source === "ttm" ? 1 : 0}
+                        stroke="#00cc00"
+                        strokeWidth={1}
                         onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
                         onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
-                      onClick={() => handleTargetClick(target, x, y)}
+                        onClick={() => handleTargetClick(target, x, y)}
                       />
 
-                      {/* Course Vector */}
+                      {/* Course Vector (green) */}
                       {courseVector && (
                         <Line
                           points={[x, y, courseVector.x2, courseVector.y2]}
-                          stroke="#ff6600"
+                          stroke="#00ff00"
                           strokeWidth={2}
                           lineCap="round"
                         />
                       )}
 
-                      {/* Dashboard Target Direction Line */}
-                      {target.source === "dashboard" && hasCenter && (
+                      {/* Heading Vector (blue, shorter) */}
+                      {headingVector && (
                         <Line
-                          points={[
-                            x,
-                            y,
-                            x + 10 * Math.sin(toRadians(bearing)),
-                            y - 10 * Math.cos(toRadians(bearing))
-                          ]}
-                          stroke="red"
+                          points={[x, y, headingVector.x2, headingVector.y2]}
+                          stroke="#0088ff"
                           strokeWidth={1}
+                          lineCap="round"
                         />
                       )}
 
                       {/* Target Label */}
                       <KonvaText
-                        text={`${targetId}${target.target_status ? ` (${target.target_status})` : ""}`}
+                        text={String(targetId)}
                         x={x + 8}
                         y={y - 15}
                         fontSize={9}
@@ -641,14 +647,14 @@ const RadarDisplay: React.FC = () => {
                         shadowBlur={2}
                       />
 
-                      {/* Distance and Bearing for TTM */}
-                      {target.source === "ttm" && hasCenter && (
+                      {/* Distance and Bearing */}
+                      {hasCenter && (
                         <KonvaText
                           text={`${distance.toFixed(1)}NM ${bearing.toFixed(0)}°`}
                           x={x + 8}
                           y={y - 5}
                           fontSize={8}
-                          fill="#ff6600"
+                          fill="#00ff00"
                           shadowColor="black"
                           shadowBlur={2}
                         />
@@ -665,8 +671,8 @@ const RadarDisplay: React.FC = () => {
             <div
               style={{
                 position: "absolute",
-                top: tooltipTarget.y + 40,
-                left: tooltipTarget.x + 40,
+                top: Math.min(tooltipTarget.y + 40, CANVAS_SIZE - 250), // Prevent overflow
+                left: Math.min(tooltipTarget.x + 40, CANVAS_SIZE - 350), // Prevent overflow
                 zIndex: 10,
               }}
             >
@@ -674,59 +680,149 @@ const RadarDisplay: React.FC = () => {
                 opened={!!tooltipTarget}
                 onClose={() => setTooltipTarget(null)}
                 withArrow
-                shadow="md"
+                shadow="lg"
                 position="right"
+                radius="md"
               >
                 <Popover.Target>
                   <div style={{ width: 1, height: 1 }} />
                 </Popover.Target>
-                <Popover.Dropdown>
-                  <div>
-                    <strong>
-                      {tooltipTarget.data.source?.toUpperCase() ?? "TARGET"}{" "}
-                      {tooltipTarget.data.targetId || tooltipTarget.data.target_number}
-                    </strong>
-                    <br />
-                    {tooltipTarget.data.target_status && (
-                      <>Status: {tooltipTarget.data.target_status}<br /></>
-                    )}
-                    Lat: {Number(tooltipTarget.data.latitude ?? tooltipTarget.data.lat).toFixed(6)}
-                    <br />
-                    Lon: {Number(tooltipTarget.data.longitude ?? tooltipTarget.data.lon).toFixed(6)}
-                    <br />
+                <Popover.Dropdown p="md" maw={380}>
+                  <div style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                    {/* Header with MMSI and Source */}
+                    <Group justify="space-between" mb="xs">
+                      <Text fw={700} size="sm" c="blue">
+                        {tooltipTarget.data.source?.toUpperCase() ?? "VESSEL"} {tooltipTarget.data.mmsi}
+                      </Text>
+                      <Badge
+                        size="xs"
+                        color={tooltipTarget.data.source === 'ais' ? 'green' : 'yellow'}
+                        variant="filled"
+                      >
+                        {tooltipTarget.data.source?.toUpperCase()}
+                      </Badge>
+                    </Group>
+
+                    {/* AIS Status */}
+                    <Group mb="xs">
+                      <Text fw={600} size="xs">Status:</Text>
+                      <Badge size="xs" variant="light" color="green">
+                        {getStatusDescription(tooltipTarget.data.status)}
+                      </Badge>
+                    </Group>
+
+                    {/* Position Information */}
+                    <div style={{ backgroundColor: '#f8f9fa', padding: '8px', borderRadius: '4px', marginBottom: '8px' }}>
+                      <Text fw={600} size="xs" mb={4} c="dark">📍 Position</Text>
+                      <Group gap="xs" mb={2}>
+                        <Text size="xs" w={35} c="dimmed">Lat:</Text>
+                        <Text size="xs" fw={500} c="dark">
+                          {Number(tooltipTarget.data.latitude ?? tooltipTarget.data.lat).toFixed(6)}°
+                        </Text>
+                      </Group>
+                      <Group gap="xs">
+                        <Text size="xs" w={35} c="dimmed">Lon:</Text>
+                        <Text size="xs" fw={500} c="dark">
+                          {Number(tooltipTarget.data.longitude ?? tooltipTarget.data.lon).toFixed(6)}°
+                        </Text>
+                      </Group>
+                      {tooltipTarget.data.accuracy !== undefined && (
+                        <Group gap="xs" mt={4}>
+                          <Text size="xs" c="dimmed">GPS Accuracy:</Text>
+                          <Badge size="xs" color={tooltipTarget.data.accuracy ? "green" : "orange"}>
+                            {tooltipTarget.data.accuracy ? "High" : "Low"}
+                          </Badge>
+                        </Group>
+                      )}
+                    </div>
+
+                    {/* Distance and Bearing from Own Vessel */}
                     {hasCenter && (
-                      <>
-                        Distance:{" "}
-                        {haversineDistanceNM(
-                          centerLat,
-                          centerLon,
-                          Number(tooltipTarget.data.latitude ?? tooltipTarget.data.lat),
-                          Number(tooltipTarget.data.longitude ?? tooltipTarget.data.lon)
-                        ).toFixed(2)}{" "}
-                        NM
-                        <br />
-                        Bearing:{" "}
-                        {bearingFromTo(
-                          centerLat,
-                          centerLon,
-                          Number(tooltipTarget.data.latitude ?? tooltipTarget.data.lat),
-                          Number(tooltipTarget.data.longitude ?? tooltipTarget.data.lon)
-                        ).toFixed(0)}
-                        °
-                      </>
+                      <div style={{ backgroundColor: '#e7f5ff', padding: '8px', borderRadius: '4px', marginBottom: '8px' }}>
+                        <Text fw={600} size="xs" mb={4} c="blue">🧭 Relative Position</Text>
+                        <Group gap="md">
+                          <Group gap="xs">
+                            <Text size="xs" c="dimmed">Distance:</Text>
+                            <Text size="xs" fw={500} c="blue">
+                              {haversineDistanceNM(
+                                centerLat,
+                                centerLon,
+                                Number(tooltipTarget.data.latitude ?? tooltipTarget.data.lat),
+                                Number(tooltipTarget.data.longitude ?? tooltipTarget.data.lon)
+                              ).toFixed(2)} NM
+                            </Text>
+                          </Group>
+                          <Group gap="xs">
+                            <Text size="xs" c="dimmed">Bearing:</Text>
+                            <Text size="xs" fw={500} c="blue">
+                              {bearingFromTo(
+                                centerLat,
+                                centerLon,
+                                Number(tooltipTarget.data.latitude ?? tooltipTarget.data.lat),
+                                Number(tooltipTarget.data.longitude ?? tooltipTarget.data.lon)
+                              ).toFixed(0)}°
+                            </Text>
+                          </Group>
+                        </Group>
+                      </div>
                     )}
-                    {Number.isFinite(tooltipTarget.data.speed) && (
-                      <>
-                        <br />
-                        Speed: {Number(tooltipTarget.data.speed)} kts
-                      </>
+
+                    {/* Navigation Data */}
+                    {(Number.isFinite(tooltipTarget.data.speed) || Number.isFinite(tooltipTarget.data.course) || Number.isFinite(tooltipTarget.data.heading)) && (
+                      <div style={{ backgroundColor: '#e8f5e8', padding: '8px', borderRadius: '4px', marginBottom: '8px' }}>
+                        <Text fw={600} size="xs" mb={4} c="green">Navigation Data</Text>
+                        <Group gap="md" mb={4}>
+                          {Number.isFinite(tooltipTarget.data.speed) && (
+                            <Group gap="xs">
+                              <Text size="xs" c="dimmed">Speed:</Text>
+                              <Text size="xs" fw={500} c="green">
+                                {Number(tooltipTarget.data.speed).toFixed(1)} kts
+                              </Text>
+                            </Group>
+                          )}
+                          {Number.isFinite(tooltipTarget.data.course) && (
+                            <Group gap="xs">
+                              <Text size="xs" c="dimmed">COG:</Text>
+                              <Text size="xs" fw={500} c="green">
+                                {Number(tooltipTarget.data.course).toFixed(0)}°
+                              </Text>
+                            </Group>
+                          )}
+                        </Group>
+                        {Number.isFinite(tooltipTarget.data.heading) && (
+                          <Group gap="xs">
+                            <Text size="xs" c="dimmed">Heading:</Text>
+                            <Text size="xs" fw={500} c="green">
+                              {Number(tooltipTarget.data.heading).toFixed(0)}°
+                            </Text>
+                          </Group>
+                        )}
+                        {Number.isFinite(tooltipTarget.data.turn) && (
+                          <Group gap="xs" mt={2}>
+                            <Text size="xs" c="dimmed">Turn Rate:</Text>
+                            <Text size="xs" fw={500} c="green">
+                              {Number(tooltipTarget.data.turn).toFixed(1)}°/min
+                            </Text>
+                          </Group>
+                        )}
+                      </div>
                     )}
-                    {Number.isFinite(tooltipTarget.data.course) && (
-                      <>
-                        <br />
-                        Course: {Number(tooltipTarget.data.course)}°
-                      </>
-                    )}
+
+                    {/* Action Button */}
+                    <Group justify="center" mt="sm">
+                      <Button
+                        size="xs"
+                        variant="light"
+                        onClick={() => {
+                          if (setSelectedVessel) {
+                            setSelectedVessel(tooltipTarget.data as any);
+                          }
+                          setTooltipTarget(null);
+                        }}
+                      >
+                        Select Vessel
+                      </Button>
+                    </Group>
                   </div>
                 </Popover.Dropdown>
               </Popover>
@@ -738,8 +834,8 @@ const RadarDisplay: React.FC = () => {
       {/* No Targets Alert */}
       {!visibleTargets.length && (
         <Alert variant="light" color="gray" mt="sm" mx="sm">
-          No targets to display yet.{" "}
-          {hasCenter ? "Try increasing the range." : "Waiting for own vessel fix or target data."}
+          No vessels to display yet.{" "}
+          {hasCenter ? "Try increasing the range or wait for AIS data." : "Waiting for own vessel position fix or AIS data."}
         </Alert>
       )}
     </Card>

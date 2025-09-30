@@ -1,7 +1,7 @@
 "use client";
 import DetailsCard from "@/components/Navigation/DetailsCard";
 import { DashboardProvider } from "@/contexts/DashboardContext";
-import { Grid, GridCol, Tabs, Card, Center, Loader, Text,  } from "@mantine/core";
+import { Grid, GridCol, Tabs, Card, Center, Loader, Text, } from "@mantine/core";
 import { RadioProvider } from "@/contexts/RadioContext";
 import { useState } from "react";
 import dynamic from 'next/dynamic';
@@ -34,7 +34,7 @@ export default function Navigation() {
           </Tabs.List>
 
           <Tabs.Panel value="ais">
-           
+
             <Grid>
               <GridCol span={8} pos={"relative"}>
                 <RadarDisplay />
