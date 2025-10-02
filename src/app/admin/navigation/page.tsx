@@ -19,6 +19,19 @@ const RadarDisplay = dynamic(() => import("@/components/Dashboard/RadarDisplay")
     </Card>
   ),
 });
+const RadarDisplayTab = dynamic(() => import("@/components/RaderTab"), {
+  ssr: false,
+  loading: () => (
+    <Card shadow="sm" p="xl" radius="md" withBorder>
+      <Center h={400}>
+        <Loader size="lg" />
+      </Center>
+      <Text ta="center" mt="md" c="dimmed">
+        Loading radar display...
+      </Text>
+    </Card>
+  ),
+});
 
 export default function Navigation() {
   const [activeTab, setActiveTab] = useState("ais");
@@ -51,7 +64,7 @@ export default function Navigation() {
           <Tabs.Panel value="radar">
             <Grid>
               <GridCol span={8} pos={"relative"}>
-                <RadarDisplay />
+                <RadarDisplayTab />
                 {/* <Paper p={"md"} pos={"absolute"} bottom={10} left={25} w={"95%"}>
                   <RadioControl />
                 </Paper> */}

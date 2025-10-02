@@ -1,3 +1,4 @@
+'use client'
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@mantine/core";
 import { useState } from "react";
 import AboutTab from "./AboutTab";
