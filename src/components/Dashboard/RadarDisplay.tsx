@@ -90,7 +90,7 @@ const AIS_STATUS = {
   12: "Power-driven vessel pushing ahead",
   13: "Reserved",
   14: "AIS-SART",
-  15: "Reserved"
+  15: "Reserved",
 };
 
 // Utility functions

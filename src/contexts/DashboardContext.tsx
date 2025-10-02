@@ -1,4 +1,5 @@
- import { useDashboardHook } from '@/hooks/useDashboardHook';
+'use client'
+import { useDashboardHook } from '@/hooks/useDashboardHook';
 import { createContext, useContext, ReactNode } from "react";
 
 const DashboardContext = createContext<ReturnType<typeof useDashboardHook> | null>(null);
