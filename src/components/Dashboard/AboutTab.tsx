@@ -58,11 +58,14 @@ const bearingFromTo = (lat1: number, lon1: number, lat2: number, lon2: number): 
   return (θ + 360) % 360;
 };
 
-// Ship Radar Component
+// Ship Radar Component - Updated to match radar display orientation
 function ShipRadar({ bearing, distance, }: { bearing: number, distance?: number, maxRange?: number }) {
   const size = 280;
   const center = size / 2;
   const radarRadius = (size / 2) - 40;
+  
+  // Rotate 90° clockwise to match radar display (North starts from West)
+  const adjustedBearing = bearing - 90;
   
   return (
     <svg width={size} height={size} style={{ maxWidth: '100%', height: 'auto' }}>
@@ -85,12 +88,17 @@ function ShipRadar({ bearing, distance, }: { bearing: number, distance?: number,
       <line x1={center} y1={center - radarRadius} x2={center} y2={center + radarRadius} stroke="#1e293b" strokeWidth="1" opacity="0.5" />
       <line x1={center - radarRadius} y1={center} x2={center + radarRadius} y2={center} stroke="#1e293b" strokeWidth="1" opacity="0.5" />
       
+      {/* Compass labels - Rotated to match radar display */}
+      <text x={20} y={center + 5} textAnchor="middle" fill="#669BC0" fontSize="12" fontWeight="bold">N</text>
+      <text x={size - 20} y={center + 5} textAnchor="middle" fill="#669BC0" fontSize="12" fontWeight="bold">S</text>
+      <text x={center} y={size - 25} textAnchor="middle" fill="#669BC0" fontSize="12" fontWeight="bold">W</text>
+      <text x={center} y={30} textAnchor="middle" fill="#669BC0" fontSize="12" fontWeight="bold">E</text>
+      
       {/* Center dot */}
       <circle cx={center} cy={center} r="3" fill="#669BC0" opacity="0.6" />
       
-      
-      {/* Ship icon in center pointing at bearing */}
-      <g transform={`translate(${center}, ${center}) rotate(${bearing}) scale(0.18)`}>
+      {/* Ship icon in center pointing at adjusted bearing */}
+      <g transform={`translate(${center}, ${center}) rotate(${adjustedBearing}) scale(0.18)`}>
         <g transform="translate(-48.5, -143)">
           <path
             d="M57.9087 4.59661C52.9358 -1.5322 44.0642 -1.5322 39.0913 4.59661C22.2742 25.3227 0 68.8418 0 134.215V253.638C0 271.511 14.4761 286 32.3333 286H64.6667C82.5239 286 97 271.511 97 253.638V134.215C97 68.8418 74.7258 25.3227 57.9087 4.59661Z"
@@ -219,7 +227,7 @@ function TargetDetailsSection({ target, ownVesselData }: { target: TTMTarget | T
               <Text fw={600} size="md">Radar Data</Text>
             </Group>
 
-            <Stack gap="xs" mb="md" pl="md" style={{ backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '8px' }}>
+            <Stack gap="xs" mb="md" pl="md" style={{  padding: '12px', borderRadius: '8px' }}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">Distance:</Text>
                 <Text size="sm" fw={500} c="grape">
@@ -241,7 +249,7 @@ function TargetDetailsSection({ target, ownVesselData }: { target: TTMTarget | T
               <Text fw={600} size="md">Navigation</Text>
             </Group>
 
-            <Stack gap="xs" mb="md" pl="md" style={{ backgroundColor: '#fff3e0', padding: '12px', borderRadius: '8px' }}>
+            <Stack gap="xs" mb="md" pl="md" style={{  padding: '12px', borderRadius: '8px' }}>
               {Number.isFinite((target as TTMTarget).speed) && (
                 <Group justify="space-between">
                   <Text size="sm" c="dimmed">Speed:</Text>
@@ -269,7 +277,7 @@ function TargetDetailsSection({ target, ownVesselData }: { target: TTMTarget | T
                   <Text fw={600} size="md">Collision Avoidance</Text>
                 </Group>
 
-                <Stack gap="xs" mb="md" pl="md" style={{ backgroundColor: '#ffebee', padding: '12px', borderRadius: '8px' }}>
+                <Stack gap="xs" mb="md" pl="md" style={{  padding: '12px', borderRadius: '8px' }}>
                   {(target as TTMTarget).cpa !== undefined && (
                     <Group justify="space-between">
                       <Text size="sm" c="dimmed">CPA (Closest Point):</Text>
@@ -302,7 +310,7 @@ function TargetDetailsSection({ target, ownVesselData }: { target: TTMTarget | T
               <Text fw={600} size="md">Position</Text>
             </Group>
 
-            <Stack gap="xs" mb="md" pl="md" style={{ backgroundColor: '#e7f5ff', padding: '12px', borderRadius: '8px' }}>
+            <Stack gap="xs" mb="md" pl="md" style={{  padding: '12px', borderRadius: '8px' }}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">Latitude:</Text>
                 <Group gap="xs">
@@ -360,7 +368,7 @@ function TargetDetailsSection({ target, ownVesselData }: { target: TTMTarget | T
               <Text fw={600} size="md">Relative Position</Text>
             </Group>
 
-            <Stack gap="xs" pl="md" style={{ backgroundColor: '#e8f5e9', padding: '12px', borderRadius: '8px' }}>
+            <Stack gap="xs" pl="md" style={{  padding: '12px', borderRadius: '8px' }}>
               <Group justify="space-between">
                 <Text size="sm" c="dimmed">Distance from Own Vessel:</Text>
                 <Text size="sm" fw={500} c="green">

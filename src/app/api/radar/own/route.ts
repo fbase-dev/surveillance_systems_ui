@@ -2,8 +2,8 @@ export async function GET() {
   const baseUrl = "https://camera-server-cloud-run-183968704272.us-central1.run.app";
 
   try {
-    // Fetch radar own-ship data from the server
     const response = await fetch(`${baseUrl}/radar_data/own`, { cache: "no-cache" });
+
     if (!response.ok) {
       return new Response(
         JSON.stringify({
@@ -14,7 +14,6 @@ export async function GET() {
       );
     }
 
-    // Parse the radar response JSON
     const data = await response.json();
     const raosd = data?.raosd ?? null;
 
@@ -29,13 +28,11 @@ export async function GET() {
       );
     }
 
-    // Convert directional lat/lon to signed decimal degrees
     const latitude =
       raosd.lat_dir === "S" ? -Math.abs(Number(raosd.lat)) : Number(raosd.lat);
     const longitude =
       raosd.lon_dir === "W" ? -Math.abs(Number(raosd.lon)) : Number(raosd.lon);
 
-    // Build processed result
     const result = {
       latitude,
       longitude,
@@ -53,7 +50,6 @@ export async function GET() {
       system_timestamp: data?.timestamp ?? new Date().toISOString(),
     };
 
-    // Return success
     return new Response(
       JSON.stringify({
         success: true,

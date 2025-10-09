@@ -86,7 +86,9 @@ const polarToCartesian = (
   canvasSize = CANVAS_SIZE
 ) => {
   const radius = (distanceNM / maxRangeNM) * (canvasSize / 2);
-  const angleRad = toRadians(bearingDeg);
+  // Rotate 90° clockwise: North starts from West (270°)
+  const adjustedBearing = bearingDeg - 90;
+  const angleRad = toRadians(adjustedBearing);
   const x = canvasSize / 2 + radius * Math.sin(angleRad);
   const y = canvasSize / 2 - radius * Math.cos(angleRad);
   return { x, y };
@@ -114,7 +116,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
     const endpoints: Record<string, string> = {
       ttm: "/api/tracking_data",
       tll: "/api/target_location_batch",
-      own: "/api/radar_data/own",
+      own: "/api/radar/own",
     };
 
     try {
@@ -353,8 +355,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
     return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLon}&zoom=${zoom}&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=satellite&key=${mapKey}${mapId ? `&map_id=${mapId}` : ""}`;
   }, [hasCenter, centerLat, centerLon, radarRange, calculateMapZoom]);
 
-  //const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${ownAisData.lat},${ownAisData.lon}&zoom=13&size=${canvasSize}x${canvasSize}&maptype=roadmap&key=${process.env.NEXT_PUBLIC_MAP_API_KEY}&map_id=${process.env.NEXT_PUBLIC_MAP_ID}`;
-
   return (
     <Card p={0} h={CANVAS_SIZE + 100} style={{ backgroundColor: '#030E1B80' }}>
       {/* Control Panel */}
@@ -441,16 +441,16 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                       CANVAS_SIZE / 2,
                       CANVAS_SIZE / 2,
                       CANVAS_SIZE / 2,
-                      toRadians(sweepAngle - 30),
-                      toRadians(sweepAngle + 30)
+                      toRadians(sweepAngle - 30 - 90),
+                      toRadians(sweepAngle + 30 - 90)
                     );
                     context.closePath();
                     context.fillStrokeShape(shape);
                   }}
                   fillLinearGradientStartPoint={{ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 }}
                   fillLinearGradientEndPoint={{
-                    x: CANVAS_SIZE / 25 + (CANVAS_SIZE / 2) * Math.sin(toRadians(sweepAngle)),
-                    y: CANVAS_SIZE / 25 - (CANVAS_SIZE / 2) * Math.cos(toRadians(sweepAngle)),
+                    x: CANVAS_SIZE / 25 + (CANVAS_SIZE / 2) * Math.sin(toRadians(sweepAngle - 90)),
+                    y: CANVAS_SIZE / 25 - (CANVAS_SIZE / 2) * Math.cos(toRadians(sweepAngle - 90)),
                   }}
                   fillLinearGradientColorStops={[0, "rgba(255,0,255,0.3)", 1, "rgba(255,0,255,0)"]}
                 />
@@ -472,8 +472,8 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                       points={[
                         CANVAS_SIZE / 2,
                         CANVAS_SIZE / 2,
-                        CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading!)),
-                        CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading!)),
+                        CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90)),
+                        CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90)),
                       ]}
                       stroke="#00ff00"
                       strokeWidth={3}
@@ -481,8 +481,8 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                     />
                     {/* Heading indicator arrowhead */}
                     <Circle
-                      x={CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading!))}
-                      y={CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading!))}
+                      x={CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90))}
+                      y={CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90))}
                       radius={3}
                       fill="#00ff00"
                     />
@@ -504,10 +504,10 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                 )}
 
                 {/* Compass Labels */}
-                <KonvaText text="N" x={CANVAS_SIZE / 2 - 5} y={5} fontSize={12} fill="white" fontStyle="bold" />
-                <KonvaText text="S" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 18} fontSize={12} fill="white" fontStyle="bold" />
-                <KonvaText text="W" x={5} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
-                <KonvaText text="E" x={CANVAS_SIZE - 15} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="N" x={5} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="S" x={CANVAS_SIZE - 15} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="W" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 18} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="E" x={CANVAS_SIZE / 2 - 5} y={5} fontSize={12} fill="white" fontStyle="bold" />
 
                 {/* Radar Targets */}
                 {visibleTargets.map((target, idx) => {
@@ -632,28 +632,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         </div>
       </BackgroundImage>
 
-      {/* Info Alert */}
-      <Alert variant="light" color={isConnected ? "blue" : "yellow"} mt="sm" mx="sm">
-        {isConnected ? (
-          <>
-            <strong>Live Data:</strong> {visibleTargets.length} target{visibleTargets.length !== 1 ? 's' : ''} within {radarRange} NM
-            {hasOwnFix && (
-              <>
-                {' • '}
-                <strong>Own Vessel:</strong> {currentOwnVessel.latitude.toFixed(5)}°, {currentOwnVessel.longitude.toFixed(5)}°
-                {Number.isFinite(currentOwnVessel.heading) && (
-                  <> • <strong>HDG:</strong> {currentOwnVessel.heading?.toFixed(1)}°</>
-                )}
-                {Number.isFinite(currentOwnVessel.speed) && (
-                  <> • <strong>SPD:</strong> {currentOwnVessel.speed?.toFixed(1)} kts</>
-                )}
-              </>
-            )}
-          </>
-        ) : (
-          "Waiting for connection to radar data server..."
-        )}
-      </Alert>
+     
     </Card>
   );
 };

@@ -1,25 +1,27 @@
-import { useDashboard } from "@/contexts/DashboardContext";
-import { BackgroundImage, Card, Container, Group, Select, Badge, Alert } from "@mantine/core";
-import Konva from "konva";
-import dynamic from "next/dynamic";
-import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+'use client'
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Card, Group, Select, Badge, Alert, BackgroundImage } from "@mantine/core";
 import { Stage, Layer, Circle, Line, Text as KonvaText, Shape } from "react-konva";
 
 // Types
-interface AISVessel {
-  mmsi: number;
+interface AISTarget {
+  target_number: number;
+  mmsi: string;
+  name?: string;
   latitude: number;
   longitude: number;
+  heading?: number;
   speed?: number;
   course?: number;
-  heading?: number;
-  status?: number;
-  turn?: number;
-  accuracy?: boolean;
-  source: string;
+  ship_type?: number;
+  nav_status?: number;
+  timestamp?: string;
+  source: 'ais';
 }
 
 interface OwnVesselData {
+  mmsi?: string;
+  name?: string;
   latitude: number;
   longitude: number;
   heading?: number;
@@ -27,18 +29,15 @@ interface OwnVesselData {
   course?: number;
 }
 
-interface Target extends AISVessel {
-  lat?: number;
-  lon?: number;
+interface RadarDisplayProps {
+  onTargetSelect?: (target: AISTarget | null) => void;
+  onOwnVesselUpdate?: (data: OwnVesselData | null) => void;
 }
 
 // Constants
 const CANVAS_SIZE = 650;
-const SWEEP_SPEED = 60; // milliseconds
-const FETCH_INTERVALS = {
-  AIS: 3000,
-  OWN: 2000,
-} as const;
+const SWEEP_SPEED = 60;
+const API_POLL_INTERVAL = 3000;
 
 const RADAR_RANGES = [
   { value: "1", label: "1 NM" },
@@ -48,24 +47,18 @@ const RADAR_RANGES = [
   { value: "20", label: "20 NM" },
 ];
 
-// Updated API Endpoints - Using Next.js API routes
-const RADAR_ENDPOINTS = {
-  AIS: '/api/ais/other',
-  OWN: '/api/ais_data/own',
-};
-
 // Utility functions
 const toRadians = (deg: number): number => deg * (Math.PI / 180);
 
 const haversineDistanceNM = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 6371e3; // Earth's radius in meters
+  const R = 6371e3;
   const φ1 = toRadians(lat1);
   const φ2 = toRadians(lat2);
   const Δφ = toRadians(lat2 - lat1);
   const Δλ = toRadians(lon2 - lon1);
   const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c) / 1852; // Convert meters to nautical miles
+  return (R * c) / 1852;
 };
 
 const bearingFromTo = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -86,168 +79,181 @@ const polarToCartesian = (
   canvasSize = CANVAS_SIZE
 ) => {
   const radius = (distanceNM / maxRangeNM) * (canvasSize / 2);
-  const angleRad = toRadians(bearingDeg);
+  const adjustedBearing = bearingDeg - 90;
+  const angleRad = toRadians(adjustedBearing);
   const x = canvasSize / 2 + radius * Math.sin(angleRad);
   const y = canvasSize / 2 - radius * Math.cos(angleRad);
   return { x, y };
 };
 
-const setCursor = (stage: Konva.Stage | null, cursor: string) => {
+const setCursor = (stage: any, cursor: string) => {
   if (stage?.container()) {
     stage.container().style.cursor = cursor;
   }
 };
 
-const RadarDisplay: React.FC = () => {
+const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVesselUpdate }) => {
   // State
   const [sweepAngle, setSweepAngle] = useState(0);
-  const [aisVessels, setAisVessels] = useState<AISVessel[]>([]);
+  const [aisTargets, setAisTargets] = useState<AISTarget[]>([]);
   const [ownVesselData, setOwnVesselData] = useState<OwnVesselData | null>(null);
   const [radarRange, setRadarRange] = useState<number>(5);
   const [isConnected, setIsConnected] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<AISTarget | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Context
-  const { selectedVessel, setSelectedVessel, ownAisData } = useDashboard();
 
-  // Refs
-  const intervalRefs = useRef<Record<string, ReturnType<typeof setInterval>>>({});
-
-  // Process AIS batch data - UPDATED to handle multiple formats
-  const processAISBatch = useCallback((data: any) => {
-    console.log('Processing AIS data, type:', typeof data, 'isArray:', Array.isArray(data));
-    
-    let items: any[] = [];
-    
-    // Format 1: { batch: [...] } - original format
-    if (data?.batch && Array.isArray(data.batch)) {
-      console.log('Format: batch array with', data.batch.length, 'items');
-      items = data.batch
-        .filter((item: any) => item.decoded && !item.decode_error)
-        .map((item: any) => item.decoded);
-    }
-    // Format 2: Direct array of vessels
-    else if (Array.isArray(data)) {
-      console.log('Format: direct array with', data.length, 'items');
-      items = data;
-    }
-    // Format 3: Single vessel object
-    else if (data && typeof data === 'object') {
-      console.log('Format: single object');
-      items = [data];
-    }
-    else {
-      console.warn('Invalid AIS data structure:', data);
-      return [];
-    }
-
-    // Map to standard format
-    const vessels = items.map((item: any) => {
-      // Handle both nested and flat structures
-      const vessel = item.decoded || item;
-      
-      return {
-        mmsi: vessel.mmsi,
-        latitude: vessel.lat || vessel.latitude,
-        longitude: vessel.lon || vessel.longitude,
-        speed: vessel.speed,
-        course: vessel.course,
-        heading: vessel.heading !== 511 ? vessel.heading : undefined,
-        status: vessel.status,
-        turn: vessel.turn !== -128 ? vessel.turn : undefined,
-        accuracy: vessel.accuracy,
-        source: 'ais'
-      };
-    });
-
-    // Filter valid vessels (RELAXED validation)
-    const validVessels = vessels.filter((vessel: AISVessel) => {
-      const hasMMSI = vessel.mmsi && vessel.mmsi > 0;
-      const hasValidLat = Number.isFinite(vessel.latitude) && Math.abs(vessel.latitude) <= 90;
-      const hasValidLon = Number.isFinite(vessel.longitude) && Math.abs(vessel.longitude) <= 180;
-      
-      return hasMMSI && hasValidLat && hasValidLon;
-    });
-
-    console.log('Processed', validVessels.length, 'valid vessels from', vessels.length, 'total');
-    if (validVessels.length > 0) {
-      console.log('Sample vessel:', validVessels[0]);
-    }
-    
-    return validVessels;
-  }, []);
-
-  // API functions - Updated to use Next.js API routes
-  const fetchRadarData = useCallback(async (type: 'ais' | 'own') => {
-    try {
-      let endpoint: string;
-
-      switch (type) {
-        case 'ais':
-          endpoint = RADAR_ENDPOINTS.AIS;
-          break;
-        case 'own':
-          endpoint = RADAR_ENDPOINTS.OWN;
-          break;
-        default:
-          throw new Error(`Unknown radar data type: ${type}`);
-      }
-
-      console.log(`Fetching ${type.toUpperCase()} data from:`, endpoint);
-      const response = await fetch(endpoint);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.warn(`Failed to fetch ${type.toUpperCase()} data:`, errorData);
-        setApiError(`${type.toUpperCase()} API Error: ${response.status}`);
-        return null;
-      }
-
-      const result = await response.json();
-      console.log(`${type.toUpperCase()} response:`, result);
-
-      // Clear any previous errors on success
-      setApiError(null);
-
-      if (type === 'ais') {
-        return processAISBatch(result);
-      } else {
-        // For own vessel data
-        return result;
-      }
-    } catch (error) {
-      console.error(`Error fetching ${type.toUpperCase()} data:`, error);
-      setApiError(`Network error: ${error instanceof Error ? error.message : 'Unknown'}`);
-      return null;
-    }
-  }, [processAISBatch]);
-
-  // Computed values
-  const contextOwn = useMemo(() => {
-    const lat = Number(ownAisData?.lat);
-    const lon = Number(ownAisData?.lon);
-    const heading = Number(ownAisData?.heading);
-
-    return {
-      latitude: Number.isFinite(lat) ? lat : undefined,
-      longitude: Number.isFinite(lon) ? lon : undefined,
-      heading: Number.isFinite(heading) ? heading : undefined,
+  // Fetch AIS data from endpoints
+  const fetchAISData = useCallback(async () => {
+    const endpoints: Record<string, string> = {
+      ais: "/api/ais/other",
+      own: "/api/ais_data/own",
     };
-  }, [ownAisData]);
 
+    try {
+      const entries = Object.entries(endpoints);
+
+      const promises = entries.map(([key, url]) =>
+        fetch(url, { cache: "no-cache" })
+          .then(async (res) => {
+            if (!res.ok) {
+              throw new Error(`${key} fetch failed: ${res.status} ${res.statusText}`);
+            }
+            const json = await res.json();
+            const payload = json && typeof json === "object" && "success" in json ? json.data : json;
+            return [key, payload] as const;
+          })
+          .catch((err) => {
+            console.warn(`Error fetching ${key}:`, err);
+            return [key, null] as const;
+          })
+      );
+
+      const results = await Promise.all(promises);
+      const aisData = Object.fromEntries(results) as {
+        ais?: any;
+        own?: any;
+      };
+
+      // Debug logging
+      
+
+      // Process AIS targets - handle batch format
+      if (aisData.ais) {
+        // Check if data has a 'batch' array (decoded AIS format)
+        let aisArray: any[] = [];
+        if (aisData.ais.batch && Array.isArray(aisData.ais.batch)) {
+          // Extract only items with valid decoded data
+          aisArray = aisData.ais.batch
+            .filter((item: any) => item.decoded && !item.decode_error)
+            .map((item: any) => item.decoded);
+        } else if (Array.isArray(aisData.ais)) {
+          aisArray = aisData.ais;
+        } else {
+          aisArray = [aisData.ais].filter(Boolean);
+        }
+        
+        console.log("AIS Array:", aisArray);
+        
+        
+        const processedAIS: AISTarget[] = aisArray
+          .map((t: any, idx: number) => {
+            const processed: AISTarget = {
+              target_number: typeof t.target_number === "number" ? t.target_number : idx,
+              mmsi: String(t.mmsi || t.MMSI || ''),
+              name: t.name || t.vessel_name || t.shipname,
+              latitude: Number(t.latitude || t.lat || t.Latitude),
+              longitude: Number(t.longitude || t.lon || t.Longitude),
+              heading: t.heading !== undefined ? Number(t.heading) : undefined,
+              speed: t.speed !== undefined ? Number(t.speed) : (t.sog !== undefined ? Number(t.sog) : undefined),
+              course: t.course !== undefined ? Number(t.course) : (t.cog !== undefined ? Number(t.cog) : undefined),
+              ship_type: t.ship_type || t.shiptype,
+              nav_status: t.nav_status || t.navstat || t.status,
+              timestamp: t.timestamp,
+              source: "ais",
+            };
+            console.log("Processed AIS target:", processed);
+            return processed;
+          })
+          .filter((t: any) => {
+            const valid = t.mmsi && 
+              Number.isFinite(t.latitude) && 
+              Number.isFinite(t.longitude) &&
+              Math.abs(t.latitude) > 0.001 && 
+              Math.abs(t.longitude) > 0.001;
+            if (!valid) {
+              console.log("Filtered out invalid target:", t);
+            }
+            return valid;
+          });
+        
+        console.log("Final processed AIS targets:", processedAIS);
+       
+        setAisTargets(processedAIS);
+      } else {
+        setAisTargets([]);
+      }
+      
+      
+
+    
+      if (aisData.own) {
+        const own = aisData.own;
+        const lat = Number(own.latitude || own.lat || own.Latitude || NaN);
+        const lon = Number(own.longitude || own.lon || own.Longitude || NaN);
+        
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          const vesselData = {
+            mmsi: String(own.mmsi || own.MMSI || ''),
+            name: own.name || own.vessel_name || own.shipname,
+            latitude: lat,
+            longitude: lon,
+            heading: Number.isFinite(Number(own.heading || own.true_heading || NaN)) 
+              ? Number(own.heading || own.true_heading) 
+              : undefined,
+            speed: Number.isFinite(Number(own.speed || own.sog || NaN)) 
+              ? Number(own.speed || own.sog) 
+              : undefined,
+            course: Number.isFinite(Number(own.course || own.cog || NaN)) 
+              ? Number(own.course || own.cog) 
+              : undefined,
+          };
+          setOwnVesselData(vesselData);
+          onOwnVesselUpdate?.(vesselData);
+        } else {
+          setOwnVesselData(null);
+          onOwnVesselUpdate?.(null);
+        }
+      } else {
+        setOwnVesselData(null);
+        onOwnVesselUpdate?.(null);
+      }
+
+      const anyData = Boolean(aisData.ais || aisData.own);
+      setIsConnected(anyData);
+      setError(null);
+    } catch (err) {
+      console.error("AIS API Error:", err);
+      setError(err instanceof Error ? err.message : String(err));
+      setIsConnected(false);
+    }
+  }, [onOwnVesselUpdate]);
+
+  // Initial fetch and polling
+  useEffect(() => {
+    fetchAISData();
+    const interval = setInterval(fetchAISData, API_POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [fetchAISData]);
+
+  // Own vessel position
   const currentOwnVessel: OwnVesselData = useMemo(() => {
     return ownVesselData ?? {
-      latitude: contextOwn.latitude ?? NaN,
-      longitude: contextOwn.longitude ?? NaN,
-      heading: contextOwn.heading,
+      latitude: NaN,
+      longitude: NaN,
+      heading: undefined,
     };
-  }, [ownVesselData, contextOwn]);
-
-  const allTargets = useMemo(() => {
-    const targets: Target[] = [...aisVessels];
-    console.log('All targets:', targets.length);
-    return targets;
-  }, [aisVessels]);
+  }, [ownVesselData]);
 
   const hasOwnFix = useMemo(() => {
     return (
@@ -257,66 +263,47 @@ const RadarDisplay: React.FC = () => {
     );
   }, [currentOwnVessel]);
 
+  // Center position for radar
   const { centerLat, centerLon, hasCenter } = useMemo(() => {
-    const lat = hasOwnFix ? currentOwnVessel.latitude : allTargets[0]?.latitude ?? NaN;
-    const lon = hasOwnFix ? currentOwnVessel.longitude : allTargets[0]?.longitude ?? NaN;
+    const lat = hasOwnFix ? currentOwnVessel.latitude : NaN;
+    const lon = hasOwnFix ? currentOwnVessel.longitude : NaN;
     const hasValidCenter = Number.isFinite(lat) && Number.isFinite(lon);
-
-    console.log('Center Position:', {
-      hasOwnFix,
-      lat,
-      lon,
-      hasValidCenter,
-      totalTargets: allTargets.length
-    });
 
     return {
       centerLat: lat,
       centerLon: lon,
       hasCenter: hasValidCenter,
     };
-  }, [hasOwnFix, currentOwnVessel, allTargets]);
+  }, [hasOwnFix, currentOwnVessel]);
 
+  // Visible targets within range
   const visibleTargets = useMemo(() => {
-    if (!allTargets.length) {
-      console.log('No targets available');
-      return [];
-    }
-    
-    if (!hasCenter) {
-      console.log('No center position, showing all targets');
-      return allTargets;
-    }
+    if (!aisTargets.length || !hasCenter) return [];
 
-    const filtered = allTargets.filter((target) => {
+    const filtered = aisTargets.filter((target) => {
       const distance = haversineDistanceNM(centerLat, centerLon, target.latitude, target.longitude);
       return distance <= radarRange;
     });
 
-    console.log(`Visible targets: ${filtered.length}/${allTargets.length} (Range: ${radarRange} NM)`);
     return filtered;
-  }, [allTargets, hasCenter, centerLat, centerLon, radarRange]);
+  }, [aisTargets, hasCenter, centerLat, centerLon, radarRange]);
 
-  // Helper functions
-  const getTargetColor = useCallback((target: Target) => {
-    const isSelected = selectedVessel &&
-      ((selectedVessel as any)?.mmsi) === target.mmsi;
-
+  // Get target color
+  const getTargetColor = useCallback((target: AISTarget) => {
+    const isSelected = selectedTarget && selectedTarget.mmsi === target.mmsi;
     if (isSelected) return "orange";
-    return "#00ff00";
-  }, [selectedVessel]);
+    return "#00ffff"; // Cyan for AIS targets
+  }, [selectedTarget]);
 
-  const getTargetRadius = useCallback(() => {
-    return 5;
-  }, []);
+  // Handle target click
+  const handleTargetClick = useCallback((target: AISTarget) => {
+    const isSameTarget = selectedTarget?.mmsi === target.mmsi;
+    const newSelection = isSameTarget ? null : target;
+    setSelectedTarget(newSelection);
+    onTargetSelect?.(newSelection);
+  }, [selectedTarget, onTargetSelect]);
 
-  const handleTargetClick = useCallback((target: Target) => {
-    if (setSelectedVessel) {
-      setSelectedVessel(target as any);
-    }
-  }, [setSelectedVessel]);
-
-  // Effects
+  // Radar sweep animation
   useEffect(() => {
     const interval = setInterval(() => {
       setSweepAngle((prev) => (prev + 1) % 360);
@@ -324,83 +311,6 @@ const RadarDisplay: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    const updateConnectionStatus = () => {
-      setIsConnected(true);
-    
-    };
-
-    const handleError = () => {
-      setIsConnected(false);
-    };
-
-    // Initial data fetch
-    const initializeData = async () => {
-      try {
-        const [ais, own] = await Promise.all([
-          fetchRadarData('ais'),
-          fetchRadarData('own')
-        ]);
-
-        if (ais) setAisVessels(Array.isArray(ais) ? ais : [ais]);
-        if (own) setOwnVesselData(own);
-
-        updateConnectionStatus();
-      } catch (error) {
-        console.error("Error initializing radar data:", error);
-        handleError();
-      }
-    };
-
-    initializeData();
-
-    // AIS data interval
-    intervalRefs.current.ais = setInterval(async () => {
-      try {
-        const data = await fetchRadarData('ais');
-        if (data) {
-          setAisVessels(Array.isArray(data) ? data : [data]);
-          updateConnectionStatus();
-        }
-      } catch (error) {
-        console.error("Error fetching AIS data:", error);
-        handleError();
-      }
-    }, FETCH_INTERVALS.AIS);
-
-    // Own vessel data interval
-    intervalRefs.current.own = setInterval(async () => {
-      try {
-        const data = await fetchRadarData('own');
-        if (data) {
-          setOwnVesselData(data);
-          updateConnectionStatus();
-        }
-      } catch (error) {
-        console.error("Error fetching own vessel data:", error);
-        handleError();
-      }
-    }, FETCH_INTERVALS.OWN);
-
-    // Cleanup
-    return () => {
-      Object.values(intervalRefs.current).forEach(interval => {
-        if (interval) clearInterval(interval);
-      });
-      intervalRefs.current = {};
-    };
-  }, [fetchRadarData]);
-
-  // Map URL generation
-  const mapUrl = useMemo(() => {
-    const mapKey = process.env.NEXT_PUBLIC_MAP_API_KEY;
-    const mapId = process.env.NEXT_PUBLIC_MAP_ID;
-
-    if (!mapKey || !hasCenter) return "";
-
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLon}&zoom=13&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=roadmap&key=${mapKey}${mapId ? `&map_id=${mapId}` : ""}`;
-  }, [hasCenter, centerLat, centerLon]);
 
   const handleRangeChange = useCallback((value: string | null) => {
     if (!value) return;
@@ -410,8 +320,29 @@ const RadarDisplay: React.FC = () => {
     }
   }, []);
 
+  // Calculate zoom level based on radar range
+  const calculateMapZoom = useCallback((rangeNM: number) => {
+    if (rangeNM <= 1) return 15;
+    if (rangeNM <= 2) return 14;
+    if (rangeNM <= 5) return 13;
+    if (rangeNM <= 10) return 12;
+    if (rangeNM <= 20) return 11;
+    return 10;
+  }, []);
+
+  // Map URL generation
+  const mapUrl = useMemo(() => {
+    const mapKey = process.env.NEXT_PUBLIC_MAP_API_KEY;
+    const mapId = process.env.NEXT_PUBLIC_MAP_ID;
+
+    if (!mapKey || !hasCenter) return "";
+
+    const zoom = calculateMapZoom(radarRange);
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLon}&zoom=${zoom}&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=satellite&key=${mapKey}${mapId ? `&map_id=${mapId}` : ""}`;
+  }, [hasCenter, centerLat, centerLon, radarRange, calculateMapZoom]);
+
   return (
-    <Card p={0} h={CANVAS_SIZE + 60} bg="#030E1B80">
+    <Card p={0} h={CANVAS_SIZE + 100} style={{ backgroundColor: '#030E1B80' }}>
       {/* Control Panel */}
       <Group justify="space-between" align="center" p="sm">
         <Group gap="md">
@@ -427,228 +358,259 @@ const RadarDisplay: React.FC = () => {
             variant="filled"
             size="sm"
           >
-            {isConnected ? "Connected" : "Disconnected"}
+            {isConnected ? "AIS Live" : "Disconnected"}
           </Badge>
         </Group>
-
-        
       </Group>
 
-      {/* API Error Alert */}
-      {apiError && (
+      {/* Error Alert */}
+      {error && (
         <Alert variant="light" color="red" mx="sm" mb="sm">
-          {apiError}
+          Error: {error}
         </Alert>
       )}
 
-      {/* Radar Display */}
+  
+     
+
+      {/* Radar Display with Map Background */}
       <BackgroundImage
         src={mapUrl || ""}
         style={{
           backgroundColor: "#030E1B80",
           backgroundBlendMode: "overlay"
         }}
-        my="auto"
       >
         <div style={{ position: "relative", width: CANVAS_SIZE, margin: "auto" }}>
-          <Container p={0}>
-            <Stage width={CANVAS_SIZE} height={CANVAS_SIZE}>
-              <Layer>
-                {/* Range Rings */}
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Circle
-                    key={`ring-${i}`}
-                    x={CANVAS_SIZE / 2}
-                    y={CANVAS_SIZE / 2}
-                    radius={(i * CANVAS_SIZE) / 10}
-                    stroke="#EDF4FD"
-                    strokeWidth={0.5}
-                  />
-                ))}
-
-                {/* Cross Lines */}
-                <Line
-                  points={[CANVAS_SIZE / 2, 0, CANVAS_SIZE / 2, CANVAS_SIZE]}
-                  stroke="white"
-                  strokeWidth={1}
-                />
-                <Line
-                  points={[0, CANVAS_SIZE / 2, CANVAS_SIZE, CANVAS_SIZE / 2]}
-                  stroke="white"
-                  strokeWidth={1}
-                />
-
-                {/* Range Labels */}
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <KonvaText
-                    key={`label-${i}`}
-                    text={`${(radarRange * i) / 5} NM`}
-                    x={CANVAS_SIZE / 2 + 5}
-                    y={CANVAS_SIZE / 2 - (i * CANVAS_SIZE) / 10 - 5}
-                    fontSize={8}
-                    fill="white"
-                  />
-                ))}
-
-                {/* Radar Sweep */}
-                <Shape
-                  sceneFunc={(context, shape) => {
-                    context.beginPath();
-                    context.moveTo(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
-                    context.arc(
-                      CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2,
-                      toRadians(sweepAngle - 30),
-                      toRadians(sweepAngle + 30)
-                    );
-                    context.closePath();
-                    context.fillStrokeShape(shape);
-                  }}
-                  fillLinearGradientStartPoint={{ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 }}
-                  fillLinearGradientEndPoint={{
-                    x: CANVAS_SIZE / 25 + (CANVAS_SIZE / 2) * Math.sin(toRadians(sweepAngle)),
-                    y: CANVAS_SIZE / 25 - (CANVAS_SIZE / 2) * Math.cos(toRadians(sweepAngle)),
-                  }}
-                  fillLinearGradientColorStops={[0, "rgba(0,255,0,0.4)", 1, "rgba(0,255,0,0)"]}
-                />
-
-                {/* Center Point (Own Vessel) */}
+          <Stage width={CANVAS_SIZE} height={CANVAS_SIZE}>
+            <Layer>
+              {/* Range Rings */}
+              {[1, 2, 3, 4, 5].map((i) => (
                 <Circle
+                  key={`ring-${i}`}
                   x={CANVAS_SIZE / 2}
                   y={CANVAS_SIZE / 2}
-                  radius={4}
+                  radius={(i * CANVAS_SIZE) / 10}
+                  stroke="#EDF4FD"
+                  strokeWidth={0.5}
+                />
+              ))}
+
+              {/* Cross Lines */}
+              <Line
+                points={[CANVAS_SIZE / 2, 0, CANVAS_SIZE / 2, CANVAS_SIZE]}
+                stroke="white"
+                strokeWidth={1}
+              />
+              <Line
+                points={[0, CANVAS_SIZE / 2, CANVAS_SIZE, CANVAS_SIZE / 2]}
+                stroke="white"
+                strokeWidth={1}
+              />
+
+              {/* Range Labels */}
+              {[1, 2, 3, 4, 5].map((i) => (
+                <KonvaText
+                  key={`label-${i}`}
+                  text={`${(radarRange * i) / 5} NM`}
+                  x={CANVAS_SIZE / 2 + 5}
+                  y={CANVAS_SIZE / 2 - (i * CANVAS_SIZE) / 10 - 5}
+                  fontSize={8}
                   fill="white"
                 />
+              ))}
 
-                {/* Heading Line */}
-                {hasOwnFix && Number.isFinite(currentOwnVessel.heading) && (
+              {/* Radar Sweep */}
+              <Shape
+                sceneFunc={(context, shape) => {
+                  context.beginPath();
+                  context.moveTo(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
+                  context.arc(
+                    CANVAS_SIZE / 2,
+                    CANVAS_SIZE / 2,
+                    CANVAS_SIZE / 2,
+                    toRadians(sweepAngle - 30 - 90),
+                    toRadians(sweepAngle + 30 - 90)
+                  );
+                  context.closePath();
+                  context.fillStrokeShape(shape);
+                }}
+                fillLinearGradientStartPoint={{ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 }}
+                fillLinearGradientEndPoint={{
+                  x: CANVAS_SIZE / 25 + (CANVAS_SIZE / 2) * Math.sin(toRadians(sweepAngle - 90)),
+                  y: CANVAS_SIZE / 25 - (CANVAS_SIZE / 2) * Math.cos(toRadians(sweepAngle - 90)),
+                }}
+                fillLinearGradientColorStops={[0, "rgba(0,255,255,0.3)", 1, "rgba(0,255,255,0)"]}
+              />
+
+              {/* Center Point (Own Vessel) */}
+              <Circle
+                x={CANVAS_SIZE / 2}
+                y={CANVAS_SIZE / 2}
+                radius={6}
+                fill="#00ff00"
+                stroke="white"
+                strokeWidth={2}
+              />
+
+              {/* Heading Line */}
+              {hasOwnFix && Number.isFinite(currentOwnVessel.heading) && (
+                <>
                   <Line
                     points={[
                       CANVAS_SIZE / 2,
                       CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2 + 30 * Math.sin(toRadians(currentOwnVessel.heading!)),
-                      CANVAS_SIZE / 2 - 30 * Math.cos(toRadians(currentOwnVessel.heading!)),
+                      CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90)),
+                      CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90)),
                     ]}
-                    stroke="white"
-                    strokeWidth={2}
+                    stroke="#00ff00"
+                    strokeWidth={3}
+                    lineCap="round"
                   />
-                )}
+                  <Circle
+                    x={CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90))}
+                    y={CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90))}
+                    radius={3}
+                    fill="#00ff00"
+                  />
+                </>
+              )}
 
-                {/* Compass Labels */}
-                <KonvaText text="N" x={CANVAS_SIZE / 2 - 5} y={0} fontSize={10} fill="white" />
-                <KonvaText text="S" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 12} fontSize={10} fill="white" />
-                <KonvaText text="W" x={0} y={CANVAS_SIZE / 2 - 5} fontSize={10} fill="white" />
-                <KonvaText text="E" x={CANVAS_SIZE - 10} y={CANVAS_SIZE / 2 - 5} fontSize={10} fill="white" />
+              {/* Own Vessel Label */}
+              {hasOwnFix && (
+                <KonvaText
+                  text={currentOwnVessel.name || "OWN"}
+                  x={CANVAS_SIZE / 2 - 15}
+                  y={CANVAS_SIZE / 2 + 12}
+                  fontSize={10}
+                  fill="#00ff00"
+                  fontStyle="bold"
+                  shadowColor="black"
+                  shadowBlur={3}
+                />
+              )}
 
-                {/* Targets */}
-                {visibleTargets.map((target, idx) => {
-                  const lat = Number(target.latitude);
-                  const lon = Number(target.longitude);
+              {/* Compass Labels */}
+              <KonvaText text="N" x={5} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+              <KonvaText text="S" x={CANVAS_SIZE - 15} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+              <KonvaText text="W" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 18} fontSize={12} fill="white" fontStyle="bold" />
+              <KonvaText text="E" x={CANVAS_SIZE / 2 - 5} y={5} fontSize={12} fill="white" fontStyle="bold" />
 
-                  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+              {/* AIS Targets */}
+              {visibleTargets.map((target, idx) => {
+                const distance = haversineDistanceNM(centerLat, centerLon, target.latitude, target.longitude);
+                const bearing = bearingFromTo(centerLat, centerLon, target.latitude, target.longitude);
+                const coords = polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE);
+                const x = coords.x;
+                const y = coords.y;
 
-                  const distance = hasCenter ? haversineDistanceNM(centerLat, centerLon, lat, lon) : 0;
-                  const bearing = hasCenter ? bearingFromTo(centerLat, centerLon, lat, lon) : 0;
+                const uniqueKey = `ais-${target.mmsi}-${idx}`;
 
-                  const { x, y } = hasCenter
-                    ? polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE)
-                    : { x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 };
+                // Course/Speed vector
+                let courseVector: { x2: number; y2: number } | null = null;
+                if (Number.isFinite(target.speed) && Number.isFinite(target.course) && target.speed! > 0.1) {
+                  const vectorLength = Math.min(target.speed! * 3, 30);
+                  const courseRad = toRadians(target.course!);
+                  courseVector = {
+                    x2: x + vectorLength * Math.sin(courseRad),
+                    y2: y - vectorLength * Math.cos(courseRad),
+                  };
+                }
 
-                  const targetId = target.mmsi || `${target.source?.toUpperCase()}-${idx}`;
-                  const uniqueKey = `${target.source}-${targetId}-${idx}`;
+                return (
+                  <React.Fragment key={uniqueKey}>
+                    {/* Distance line */}
+                    <Line
+                      points={[CANVAS_SIZE / 2, CANVAS_SIZE / 2, x, y]}
+                      stroke={getTargetColor(target)}
+                      strokeWidth={0.5}
+                      dash={[5, 5]}
+                      opacity={0.4}
+                    />
 
-                  let courseVector: { x2: number; y2: number } | null = null;
-                  if (Number.isFinite(target.speed) && Number.isFinite(target.course) && target.speed! > 0.1) {
-                    const vectorLength = Math.min(target.speed! * 3, 30);
-                    const courseRad = toRadians(target.course!);
-                    courseVector = {
-                      x2: x + vectorLength * Math.sin(courseRad),
-                      y2: y - vectorLength * Math.cos(courseRad),
-                    };
-                  }
+                    {/* Target Triangle (ship shape) */}
+                    <Shape
+                      sceneFunc={(context, shape) => {
+                        context.beginPath();
+                        const size = 8;
+                        const heading = target.heading || target.course || 0;
+                        const rad = toRadians(heading - 90);
+                        
+                        // Triangle pointing in direction of heading
+                        const x1 = x + size * Math.cos(rad);
+                        const y1 = y + size * Math.sin(rad);
+                        const x2 = x + (size/2) * Math.cos(rad + Math.PI * 2/3);
+                        const y2 = y + (size/2) * Math.sin(rad + Math.PI * 2/3);
+                        const x3 = x + (size/2) * Math.cos(rad - Math.PI * 2/3);
+                        const y3 = y + (size/2) * Math.sin(rad - Math.PI * 2/3);
+                        
+                        context.moveTo(x1, y1);
+                        context.lineTo(x2, y2);
+                        context.lineTo(x3, y3);
+                        context.closePath();
+                        context.fillStrokeShape(shape);
+                      }}
+                      fill={getTargetColor(target)}
+                      stroke="#00ffff"
+                      strokeWidth={2}
+                      onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
+                      onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
+                      onClick={() => handleTargetClick(target)}
+                    />
 
-                  let headingVector: { x2: number; y2: number } | null = null;
-                  if (Number.isFinite(target.heading)) {
-                    const headingLength = 15;
-                    const headingRad = toRadians(target.heading!);
-                    headingVector = {
-                      x2: x + headingLength * Math.sin(headingRad),
-                      y2: y - headingLength * Math.cos(headingRad),
-                    };
-                  }
-
-                  return (
-                    <React.Fragment key={uniqueKey}>
-                      <Circle
-                        x={x}
-                        y={y}
-                        radius={getTargetRadius()}
-                        fill={getTargetColor(target)}
-                        stroke="#00cc00"
-                        strokeWidth={1}
-                        onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
-                        onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
-                        onClick={() => handleTargetClick(target)}
+                    {/* Course Vector */}
+                    {courseVector && (
+                      <Line
+                        points={[x, y, courseVector.x2, courseVector.y2]}
+                        stroke="#00ffff"
+                        strokeWidth={2}
+                        lineCap="round"
                       />
+                    )}
 
-                      {courseVector && (
-                        <Line
-                          points={[x, y, courseVector.x2, courseVector.y2]}
-                          stroke="#00ff00"
-                          strokeWidth={2}
-                          lineCap="round"
-                        />
-                      )}
+                    {/* Target Label */}
+                    <KonvaText
+                      text={target.name || `MMSI ${target.mmsi.slice(-4)}`}
+                      x={x + 10}
+                      y={y - 20}
+                      fontSize={9}
+                      fill="white"
+                      fontStyle="bold"
+                      shadowColor="black"
+                      shadowBlur={3}
+                    />
 
-                      {headingVector && (
-                        <Line
-                          points={[x, y, headingVector.x2, headingVector.y2]}
-                          stroke="#0088ff"
-                          strokeWidth={1}
-                          lineCap="round"
-                        />
-                      )}
-
-                      <KonvaText
-                        text={String(targetId)}
-                        x={x + 8}
-                        y={y - 15}
-                        fontSize={9}
-                        fill="white"
-                        shadowColor="black"
-                        shadowBlur={2}
-                      />
-
-                      {hasCenter && (
-                        <KonvaText
-                          text={`${distance.toFixed(1)}NM ${bearing.toFixed(0)}°`}
-                          x={x + 8}
-                          y={y - 5}
-                          fontSize={8}
-                          fill="#00ff00"
-                          shadowColor="black"
-                          shadowBlur={2}
-                        />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </Layer>
-            </Stage>
-          </Container>
+                    {/* Distance and Bearing */}
+                    <KonvaText
+                      text={`${distance.toFixed(2)} NM`}
+                      x={x + 10}
+                      y={y - 8}
+                      fontSize={8}
+                      fill="#00ffff"
+                      shadowColor="black"
+                      shadowBlur={2}
+                    />
+                    
+                    <KonvaText
+                      text={`${bearing.toFixed(1)}°`}
+                      x={x + 10}
+                      y={y + 2}
+                      fontSize={8}
+                      fill="#00ffff"
+                      shadowColor="black"
+                      shadowBlur={2}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </Layer>
+          </Stage>
         </div>
       </BackgroundImage>
 
-      {/* No Targets Alert */}
-      {!visibleTargets.length && (
-        <Alert variant="light" color="gray" mt="sm" mx="sm">
-          No vessels to display yet.{" "}
-          {hasCenter ? "Try increasing the range or wait for AIS data." : "Waiting for own vessel position fix or AIS data."}
-        </Alert>
-      )}
+    
     </Card>
   );
 };
 
-export default dynamic(() => Promise.resolve(RadarDisplay), { ssr: false });
+export default RadarDisplay;
