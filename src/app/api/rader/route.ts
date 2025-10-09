@@ -3,10 +3,12 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const dataType = searchParams.get("type");
+  
 
   const baseUrl = 'https://camera-server-cloud-run-183968704272.us-central1.run.app';
 
   try {
+  
     // Handle individual data type requests
     if (dataType === 'ttm') {
       const response = await fetch(`${baseUrl}/tracking_data`, { cache: "no-cache" });

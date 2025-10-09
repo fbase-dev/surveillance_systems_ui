@@ -3,7 +3,7 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get("path");
-  const action = searchParams.get("action"); 
+  const action = searchParams.get("action");
 
   const baseUrl = process.env.NEXT_PUBLIC_STORAGE_API_URL || 'http://102.208.116.12:8000/api';
 
@@ -14,30 +14,30 @@ export async function GET(request: Request) {
       case 'status':
         apiUrl = `${baseUrl}/status`;
         break;
-      
+
       case 'files':
         if (!path) {
           return new Response("Path is required for files action", { status: 400 });
         }
         apiUrl = `${baseUrl}/files?path=${encodeURIComponent(path)}`;
         break;
-      
+
       case 'details':
         if (!path) {
           return new Response("Path is required for details action", { status: 400 });
         }
         apiUrl = `${baseUrl}/files/details?path=${encodeURIComponent(path)}`;
         break;
-      
+
       case 'download':
         if (!path) {
           return new Response("Path is required for download action", { status: 400 });
         }
         apiUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
-        
+
         // For downloads, we need to proxy the response
         const downloadResponse = await fetch(apiUrl, { cache: "no-cache" });
-        
+
         if (!downloadResponse.ok) {
           return new Response("Failed to download file", { status: 500 });
         }
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
             ...(contentDisposition && { 'Content-Disposition': contentDisposition }),
           },
         });
-      
+
       default:
         return new Response("Invalid action. Use 'status', 'files', 'details', or 'download'", { status: 400 });
     }
@@ -64,15 +64,15 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      return new Response(`Failed to fetch storage data: ${response.statusText}`, { 
-        status: response.status 
+      return new Response(`Failed to fetch storage data: ${response.statusText}`, {
+        status: response.status
       });
     }
 
     const data = await response.json();
     return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
@@ -102,8 +102,8 @@ export async function DELETE(request: Request) {
     });
 
     if (!response.ok) {
-      return new Response(`Failed to delete file: ${response.statusText}`, { 
-        status: response.status 
+      return new Response(`Failed to delete file: ${response.statusText}`, {
+        status: response.status
       });
     }
 
@@ -147,8 +147,8 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      return new Response(`Failed to rename file: ${response.statusText}`, { 
-        status: response.status 
+      return new Response(`Failed to rename file: ${response.statusText}`, {
+        status: response.status
       });
     }
 

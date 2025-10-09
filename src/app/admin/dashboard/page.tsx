@@ -7,8 +7,9 @@ import { DashboardProvider } from "@/contexts/DashboardContext";
 import { RadioProvider } from "@/contexts/RadioContext";
 import { Card, Center, Grid, GridCol, Loader, SimpleGrid, Stack, Text } from "@mantine/core";
 import dynamic from 'next/dynamic';
+import { useState } from "react";
 
-const RadarDisplay = dynamic(() => import("@/components/Dashboard/RadarDisplay"),{
+const RadarDisplay = dynamic(() => import("@/components/RaderTab"), {
   ssr: false,
   loading: () => (
     <Card shadow="sm" p="xl" radius="md" withBorder>
@@ -22,27 +23,33 @@ const RadarDisplay = dynamic(() => import("@/components/Dashboard/RadarDisplay")
   ),
 });
 
-export default function Dashboard(){
-    
-    return(
-        <DashboardProvider>
-            <RadioProvider>
-                <Grid>
-                    <GridCol span={8}>
-                        <Stack gap={"md"}>
-                            <RadarDisplay />
-                            <SimpleGrid cols={2} spacing={"md"}>
-                                <DashboardCamCard />
-                                <MapCard />
-                            </SimpleGrid>
-                            <RadioCard />
-                        </Stack>
-                    </GridCol>
-                    <GridCol span={4}>
-                        <DetailsCard />
-                    </GridCol>
-                </Grid>
-            </RadioProvider>
-        </DashboardProvider>
-    )
+export default function Dashboard() {
+
+  const [selectedTarget, setSelectedTarget] = useState<any>(null);
+  const [ownVesselData, setOwnVesselData] = useState<any>(null);
+
+
+  return (
+    <DashboardProvider>
+      <RadioProvider>
+        <Grid>
+          <GridCol span={8}>
+            <Stack gap={"md"}>
+              <RadarDisplay onTargetSelect={setSelectedTarget}
+                onOwnVesselUpdate={setOwnVesselData} />
+              <SimpleGrid cols={2} spacing={"md"}>
+                <DashboardCamCard />
+                <MapCard />
+              </SimpleGrid>
+              <RadioCard />
+            </Stack>
+          </GridCol>
+          <GridCol span={4}>
+            <DetailsCard selectedTarget={selectedTarget}
+              ownVesselData={ownVesselData} />
+          </GridCol>
+        </Grid>
+      </RadioProvider>
+    </DashboardProvider>
+  )
 }
