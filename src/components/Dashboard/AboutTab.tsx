@@ -59,7 +59,7 @@ const bearingFromTo = (lat1: number, lon1: number, lat2: number, lon2: number): 
 };
 
 // Ship Radar Component
-function ShipRadar({ bearing, distance, maxRange = 10 }: { bearing: number, distance?: number, maxRange?: number }) {
+function ShipRadar({ bearing, distance, }: { bearing: number, distance?: number, maxRange?: number }) {
   const size = 280;
   const center = size / 2;
   const radarRadius = (size / 2) - 40;

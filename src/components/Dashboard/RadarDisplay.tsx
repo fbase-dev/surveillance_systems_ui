@@ -1,5 +1,5 @@
 import { useDashboard } from "@/contexts/DashboardContext";
-import { BackgroundImage, Card, Container, Group, Select, Badge, Text, Alert } from "@mantine/core";
+import { BackgroundImage, Card, Container, Group, Select, Badge, Alert } from "@mantine/core";
 import Konva from "konva";
 import dynamic from "next/dynamic";
 import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
@@ -105,7 +105,6 @@ const RadarDisplay: React.FC = () => {
   const [ownVesselData, setOwnVesselData] = useState<OwnVesselData | null>(null);
   const [radarRange, setRadarRange] = useState<number>(5);
   const [isConnected, setIsConnected] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
   // Context
@@ -329,7 +328,7 @@ const RadarDisplay: React.FC = () => {
   useEffect(() => {
     const updateConnectionStatus = () => {
       setIsConnected(true);
-      setLastUpdate(new Date());
+    
     };
 
     const handleError = () => {
