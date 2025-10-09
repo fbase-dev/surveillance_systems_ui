@@ -1,10 +1,12 @@
 "use client";
 import DetailsCard from "@/components/Navigation/DetailsCard";
+
 import { DashboardProvider } from "@/contexts/DashboardContext";
 import { Grid, GridCol, Tabs, Card, Center, Loader, Text, } from "@mantine/core";
 import { RadioProvider } from "@/contexts/RadioContext";
 import { useState } from "react";
 import dynamic from 'next/dynamic';
+import RaderDetailsCard from "@/components/Dashboard/DetailsCard";
 
 const RadarDisplay = dynamic(() => import("@/components/Dashboard/RadarDisplay"), {
   ssr: false,
@@ -34,6 +36,9 @@ const RadarDisplayTab = dynamic(() => import("@/components/RaderTab"), {
 });
 
 export default function Navigation() {
+
+    const [selectedTarget, setSelectedTarget] = useState<any>(null);
+  const [ownVesselData, setOwnVesselData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("ais");
 
   return (
@@ -64,13 +69,15 @@ export default function Navigation() {
           <Tabs.Panel value="radar">
             <Grid>
               <GridCol span={8} pos={"relative"}>
-                <RadarDisplayTab />
+                <RadarDisplayTab onTargetSelect={setSelectedTarget}
+                onOwnVesselUpdate={setOwnVesselData} />
                 {/* <Paper p={"md"} pos={"absolute"} bottom={10} left={25} w={"95%"}>
                   <RadioControl />
                 </Paper> */}
               </GridCol>
               <GridCol span={4}>
-                <DetailsCard />
+                <RaderDetailsCard selectedTarget={selectedTarget}
+                  ownVesselData={ownVesselData} />
               </GridCol>
             </Grid>
           </Tabs.Panel>

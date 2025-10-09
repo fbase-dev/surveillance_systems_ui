@@ -3,8 +3,14 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@mantine/core";
 import { useState } from "react";
 import AboutTab from "./AboutTab";
 
-export default function DetailsCardTab() {
+interface DetailsCardTabProps {
+  selectedTarget?: any;
+  ownVesselData?: any;
+}
+
+export default function DetailsCardTab({ selectedTarget, ownVesselData }: DetailsCardTabProps) {
   const [activeTab, setActiveTab] = useState<string | null>("about");
+  
   return (
     <Tabs value={activeTab} onChange={setActiveTab} p={"md"}>
       <TabsList mx={"-md"} mb={"md"} justify="center">
@@ -13,7 +19,7 @@ export default function DetailsCardTab() {
       </TabsList>
 
       <TabsPanel value="about" px={"md"}>
-        <AboutTab />
+        <AboutTab selectedTarget={selectedTarget} ownVesselData={ownVesselData} />
       </TabsPanel>
       <TabsPanel value="activity">Activity panel</TabsPanel>
     </Tabs>
