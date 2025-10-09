@@ -114,7 +114,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
     const endpoints: Record<string, string> = {
       ttm: "/api/tracking_data",
       tll: "/api/target_location_batch",
-      own: "/api/ais_data/own",
+      own: "/api/radar_data/own",
     };
 
     try {
@@ -186,7 +186,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         setTllTargets([]);
       }
 
-      // Process OWN
+      // Process OWN - Updated to handle radar data format
       if (radarData.own) {
         const own = radarData.own;
         const lat = Number(own.latitude ?? own.lat ?? NaN);
@@ -195,9 +195,15 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           const vesselData = {
             latitude: lat,
             longitude: lon,
-            heading: Number.isFinite(Number(own.heading ?? own.hdg ?? NaN)) ? Number(own.heading ?? own.hdg) : undefined,
-            speed: Number.isFinite(Number(own.speed ?? NaN)) ? Number(own.speed) : undefined,
-            course: Number.isFinite(Number(own.course ?? NaN)) ? Number(own.course) : undefined,
+            heading: Number.isFinite(Number(own.heading ?? own.course ?? own.true_course ?? NaN)) 
+              ? Number(own.heading ?? own.course ?? own.true_course) 
+              : undefined,
+            speed: Number.isFinite(Number(own.speed ?? own.spd_over_grnd_knots ?? NaN)) 
+              ? Number(own.speed ?? own.spd_over_grnd_knots) 
+              : undefined,
+            course: Number.isFinite(Number(own.course ?? own.true_course ?? NaN)) 
+              ? Number(own.course ?? own.true_course) 
+              : undefined,
           };
           setOwnVesselData(vesselData);
           onOwnVesselUpdate?.(vesselData);
@@ -347,8 +353,10 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
     return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLon}&zoom=${zoom}&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=satellite&key=${mapKey}${mapId ? `&map_id=${mapId}` : ""}`;
   }, [hasCenter, centerLat, centerLon, radarRange, calculateMapZoom]);
 
+  //const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${ownAisData.lat},${ownAisData.lon}&zoom=13&size=${canvasSize}x${canvasSize}&maptype=roadmap&key=${process.env.NEXT_PUBLIC_MAP_API_KEY}&map_id=${process.env.NEXT_PUBLIC_MAP_ID}`;
+
   return (
-    <Card p={0} h={CANVAS_SIZE + 60} style={{ backgroundColor: '#030E1B80' }}>
+    <Card p={0} h={CANVAS_SIZE + 100} style={{ backgroundColor: '#030E1B80' }}>
       {/* Control Panel */}
       <Group justify="space-between" align="center" p="sm">
         <Group gap="md">
@@ -447,33 +455,59 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                   fillLinearGradientColorStops={[0, "rgba(255,0,255,0.3)", 1, "rgba(255,0,255,0)"]}
                 />
 
-                {/* Center Point (Own Vessel) */}
+                {/* Center Point (Own Vessel) - Enhanced */}
                 <Circle
                   x={CANVAS_SIZE / 2}
                   y={CANVAS_SIZE / 2}
-                  radius={4}
-                  fill="white"
+                  radius={6}
+                  fill="#00ff00"
+                  stroke="white"
+                  strokeWidth={2}
                 />
 
-                {/* Heading Line */}
+                {/* Heading Line - Enhanced */}
                 {hasOwnFix && Number.isFinite(currentOwnVessel.heading) && (
-                  <Line
-                    points={[
-                      CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2 + 30 * Math.sin(toRadians(currentOwnVessel.heading!)),
-                      CANVAS_SIZE / 2 - 30 * Math.cos(toRadians(currentOwnVessel.heading!)),
-                    ]}
-                    stroke="white"
-                    strokeWidth={5}
+                  <>
+                    <Line
+                      points={[
+                        CANVAS_SIZE / 2,
+                        CANVAS_SIZE / 2,
+                        CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading!)),
+                        CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading!)),
+                      ]}
+                      stroke="#00ff00"
+                      strokeWidth={3}
+                      lineCap="round"
+                    />
+                    {/* Heading indicator arrowhead */}
+                    <Circle
+                      x={CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading!))}
+                      y={CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading!))}
+                      radius={3}
+                      fill="#00ff00"
+                    />
+                  </>
+                )}
+
+                {/* Own Vessel Label */}
+                {hasOwnFix && (
+                  <KonvaText
+                    text="OWN"
+                    x={CANVAS_SIZE / 2 - 15}
+                    y={CANVAS_SIZE / 2 + 12}
+                    fontSize={10}
+                    fill="#00ff00"
+                    fontStyle="bold"
+                    shadowColor="black"
+                    shadowBlur={3}
                   />
                 )}
 
                 {/* Compass Labels */}
-                <KonvaText text="N" x={CANVAS_SIZE / 2 - 5} y={0} fontSize={10} fill="white" />
-                <KonvaText text="S" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 12} fontSize={10} fill="white" />
-                <KonvaText text="W" x={0} y={CANVAS_SIZE / 2 - 5} fontSize={10} fill="white" />
-                <KonvaText text="E" x={CANVAS_SIZE - 10} y={CANVAS_SIZE / 2 - 5} fontSize={10} fill="white" />
+                <KonvaText text="N" x={CANVAS_SIZE / 2 - 5} y={5} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="S" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 18} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="W" x={5} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+                <KonvaText text="E" x={CANVAS_SIZE - 15} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
 
                 {/* Radar Targets */}
                 {visibleTargets.map((target, idx) => {
@@ -525,11 +559,20 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
 
                   return (
                     <React.Fragment key={uniqueKey}>
+                      {/* Distance line from own vessel to target */}
+                      <Line
+                        points={[CANVAS_SIZE / 2, CANVAS_SIZE / 2, x, y]}
+                        stroke={getTargetColor(target)}
+                        strokeWidth={0.5}
+                        dash={[5, 5]}
+                        opacity={0.4}
+                      />
+
                       {/* Target Circle */}
                       <Circle
                         x={x}
                         y={y}
-                        radius={6}
+                        radius={7}
                         fill={getTargetColor(target)}
                         stroke={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
                         strokeWidth={2}
@@ -551,20 +594,31 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                       {/* Target Label */}
                       <KonvaText
                         text={`T${target.target_number}`}
-                        x={x + 8}
-                        y={y - 15}
-                        fontSize={9}
+                        x={x + 10}
+                        y={y - 20}
+                        fontSize={10}
                         fill="white"
+                        fontStyle="bold"
+                        shadowColor="black"
+                        shadowBlur={3}
+                      />
+
+                      {/* Distance and Bearing - Enhanced */}
+                      <KonvaText
+                        text={`${distance.toFixed(2)} NM`}
+                        x={x + 10}
+                        y={y - 8}
+                        fontSize={9}
+                        fill={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
                         shadowColor="black"
                         shadowBlur={2}
                       />
-
-                      {/* Distance and Bearing */}
+                      
                       <KonvaText
-                        text={`${distance.toFixed(1)}NM ${bearing.toFixed(0)}°`}
-                        x={x + 8}
-                        y={y - 5}
-                        fontSize={8}
+                        text={`${bearing.toFixed(1)}°`}
+                        x={x + 10}
+                        y={y + 2}
+                        fontSize={9}
                         fill={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
                         shadowColor="black"
                         shadowBlur={2}
@@ -582,9 +636,18 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
       <Alert variant="light" color={isConnected ? "blue" : "yellow"} mt="sm" mx="sm">
         {isConnected ? (
           <>
-            Live data: {visibleTargets.length} targets visible within {radarRange} NM range.
+            <strong>Live Data:</strong> {visibleTargets.length} target{visibleTargets.length !== 1 ? 's' : ''} within {radarRange} NM
             {hasOwnFix && (
-              <> Own vessel at {currentOwnVessel.latitude.toFixed(4)}°N, {currentOwnVessel.longitude.toFixed(4)}°E</>
+              <>
+                {' • '}
+                <strong>Own Vessel:</strong> {currentOwnVessel.latitude.toFixed(5)}°, {currentOwnVessel.longitude.toFixed(5)}°
+                {Number.isFinite(currentOwnVessel.heading) && (
+                  <> • <strong>HDG:</strong> {currentOwnVessel.heading?.toFixed(1)}°</>
+                )}
+                {Number.isFinite(currentOwnVessel.speed) && (
+                  <> • <strong>SPD:</strong> {currentOwnVessel.speed?.toFixed(1)} kts</>
+                )}
+              </>
             )}
           </>
         ) : (
