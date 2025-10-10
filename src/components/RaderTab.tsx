@@ -455,7 +455,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                   fillLinearGradientColorStops={[0, "rgba(255,0,255,0.3)", 1, "rgba(255,0,255,0)"]}
                 />
 
-                {/* Center Point (Own Vessel) - Enhanced */}
+                {/* Center Point (Own Vessel) - Enhanced and Clickable */}
                 <Circle
                   x={CANVAS_SIZE / 2}
                   y={CANVAS_SIZE / 2}
@@ -463,6 +463,28 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                   fill="#00ff00"
                   stroke="white"
                   strokeWidth={2}
+                  onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
+                  onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
+                  onClick={() => {
+                    if (hasOwnFix && ownVesselData) {
+                      // Create a target-like representation of own vessel
+                      const ownAsTarget: TTMTarget = {
+                        target_number: -1,
+                        distance: 0,
+                        bearing: ownVesselData.heading || 0,
+                        speed: ownVesselData.speed || 0,
+                        course: ownVesselData.course || ownVesselData.heading || 0,
+                        latitude: ownVesselData.latitude,
+                        longitude: ownVesselData.longitude,
+                        status: 'Own Vessel',
+                        source: 'ttm',
+                      };
+                      const isSameTarget = selectedTarget?.target_number === -1;
+                      const newSelection = isSameTarget ? null : ownAsTarget;
+                      setSelectedTarget(newSelection);
+                      onTargetSelect?.(newSelection);
+                    }
+                  }}
                 />
 
                 {/* Heading Line - Enhanced */}

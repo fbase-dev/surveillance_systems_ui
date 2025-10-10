@@ -102,7 +102,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
   const [selectedTarget, setSelectedTarget] = useState<AISTarget | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-
   // Fetch AIS data from endpoints
   const fetchAISData = useCallback(async () => {
     const endpoints: Record<string, string> = {
@@ -135,10 +134,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         own?: any;
       };
 
-      // Debug logging
-      
-
-      // Process AIS targets - handle batch format
+      // Process AIS targets - handle batch format with deduplication
       if (aisData.ais) {
         // Check if data has a 'batch' array (decoded AIS format)
         let aisArray: any[] = [];
@@ -155,48 +151,51 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         
         console.log("AIS Array:", aisArray);
         
+        // Process and deduplicate AIS targets (keep most recent per MMSI)
+        const targetMap = new Map<string, AISTarget>();
         
-        const processedAIS: AISTarget[] = aisArray
-          .map((t: any, idx: number) => {
-            const processed: AISTarget = {
-              target_number: typeof t.target_number === "number" ? t.target_number : idx,
-              mmsi: String(t.mmsi || t.MMSI || ''),
-              name: t.name || t.vessel_name || t.shipname,
-              latitude: Number(t.latitude || t.lat || t.Latitude),
-              longitude: Number(t.longitude || t.lon || t.Longitude),
-              heading: t.heading !== undefined ? Number(t.heading) : undefined,
-              speed: t.speed !== undefined ? Number(t.speed) : (t.sog !== undefined ? Number(t.sog) : undefined),
-              course: t.course !== undefined ? Number(t.course) : (t.cog !== undefined ? Number(t.cog) : undefined),
-              ship_type: t.ship_type || t.shiptype,
-              nav_status: t.nav_status || t.navstat || t.status,
-              timestamp: t.timestamp,
-              source: "ais",
-            };
-            console.log("Processed AIS target:", processed);
-            return processed;
-          })
-          .filter((t: any) => {
-            const valid = t.mmsi && 
-              Number.isFinite(t.latitude) && 
-              Number.isFinite(t.longitude) &&
-              Math.abs(t.latitude) > 0.001 && 
-              Math.abs(t.longitude) > 0.001;
-            if (!valid) {
-              console.log("Filtered out invalid target:", t);
-            }
-            return valid;
-          });
+        aisArray.forEach((t: any, idx: number) => {
+          const processed: AISTarget = {
+            target_number: typeof t.target_number === "number" ? t.target_number : idx,
+            mmsi: String(t.mmsi || t.MMSI || ''),
+            name: t.name || t.vessel_name || t.shipname,
+            latitude: Number(t.latitude || t.lat || t.Latitude),
+            longitude: Number(t.longitude || t.lon || t.Longitude),
+            heading: t.heading !== undefined ? Number(t.heading) : undefined,
+            speed: t.speed !== undefined ? Number(t.speed) : (t.sog !== undefined ? Number(t.sog) : undefined),
+            course: t.course !== undefined ? Number(t.course) : (t.cog !== undefined ? Number(t.cog) : undefined),
+            ship_type: t.ship_type || t.shiptype,
+            nav_status: t.nav_status || t.navstat || t.status,
+            timestamp: t.timestamp,
+            source: "ais",
+          };
+          
+          // Validate target
+          const valid = processed.mmsi && 
+            Number.isFinite(processed.latitude) && 
+            Number.isFinite(processed.longitude) &&
+            Math.abs(processed.latitude) > 0.001 && 
+            Math.abs(processed.longitude) > 0.001;
+          
+          if (valid) {
+            // Keep the most recent message per MMSI (last one in array wins)
+            targetMap.set(processed.mmsi, processed);
+          } else {
+            console.log("Filtered out invalid target:", processed);
+          }
+        });
         
-        console.log("Final processed AIS targets:", processedAIS);
+        const processedAIS = Array.from(targetMap.values());
+        
+        console.log("Final unique AIS targets:", processedAIS);
+        console.log("Number of unique vessels:", processedAIS.length);
        
         setAisTargets(processedAIS);
       } else {
         setAisTargets([]);
       }
-      
-      
 
-    
+      // Process own vessel data
       if (aisData.own) {
         const own = aisData.own;
         const lat = Number(own.latitude || own.lat || own.Latitude || NaN);
@@ -285,6 +284,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
       return distance <= radarRange;
     });
 
+    console.log(`Visible targets: ${filtered.length} of ${aisTargets.length} within ${radarRange} NM`);
     return filtered;
   }, [aisTargets, hasCenter, centerLat, centerLon, radarRange]);
 
@@ -360,6 +360,13 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           >
             {isConnected ? "AIS Live" : "Disconnected"}
           </Badge>
+          <Badge
+            color="blue"
+            variant="light"
+            size="sm"
+          >
+            {aisTargets.length} Vessels
+          </Badge>
         </Group>
       </Group>
 
@@ -369,9 +376,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           Error: {error}
         </Alert>
       )}
-
-  
-     
 
       {/* Radar Display with Map Background */}
       <BackgroundImage
@@ -451,6 +455,27 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                 fill="#00ff00"
                 stroke="white"
                 strokeWidth={2}
+                onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
+                onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
+                onClick={() => {
+                  if (hasOwnFix && ownVesselData) {
+                    const ownAsTarget: AISTarget = {
+                      target_number: -1,
+                      mmsi: ownVesselData.mmsi || 'OWN',
+                      name: ownVesselData.name || 'Own Vessel',
+                      latitude: ownVesselData.latitude,
+                      longitude: ownVesselData.longitude,
+                      heading: ownVesselData.heading,
+                      speed: ownVesselData.speed,
+                      course: ownVesselData.course,
+                      source: 'ais',
+                    };
+                    const isSameTarget = selectedTarget?.mmsi === ownAsTarget.mmsi;
+                    const newSelection = isSameTarget ? null : ownAsTarget;
+                    setSelectedTarget(newSelection);
+                    onTargetSelect?.(newSelection);
+                  }
+                }}
               />
 
               {/* Heading Line */}
@@ -528,30 +553,13 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                       opacity={0.4}
                     />
 
-                    {/* Target Triangle (ship shape) */}
-                    <Shape
-                      sceneFunc={(context, shape) => {
-                        context.beginPath();
-                        const size = 8;
-                        const heading = target.heading || target.course || 0;
-                        const rad = toRadians(heading - 90);
-                        
-                        // Triangle pointing in direction of heading
-                        const x1 = x + size * Math.cos(rad);
-                        const y1 = y + size * Math.sin(rad);
-                        const x2 = x + (size/2) * Math.cos(rad + Math.PI * 2/3);
-                        const y2 = y + (size/2) * Math.sin(rad + Math.PI * 2/3);
-                        const x3 = x + (size/2) * Math.cos(rad - Math.PI * 2/3);
-                        const y3 = y + (size/2) * Math.sin(rad - Math.PI * 2/3);
-                        
-                        context.moveTo(x1, y1);
-                        context.lineTo(x2, y2);
-                        context.lineTo(x3, y3);
-                        context.closePath();
-                        context.fillStrokeShape(shape);
-                      }}
+                    {/* Target Dot */}
+                    <Circle
+                      x={x}
+                      y={y}
+                      radius={6}
                       fill={getTargetColor(target)}
-                      stroke="#00ffff"
+                      stroke="white"
                       strokeWidth={2}
                       onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
                       onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
@@ -607,8 +615,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           </Stage>
         </div>
       </BackgroundImage>
-
-    
     </Card>
   );
 };
