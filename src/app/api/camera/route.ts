@@ -1,47 +1,47 @@
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const path = searchParams.get("path");
+// export async function GET(request: Request) {
+//   const { searchParams } = new URL(request.url);
+//   const path = searchParams.get("path");
 
-  if (!path) {
-    return new Response("Path is required", { status: 400 });
-  }
+//   if (!path) {
+//     return new Response("Path is required", { status: 400 });
+//   }
 
-  const apiUrl = `${process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL}${path}`;
+//   const apiUrl = `${process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL}${path}`;
 
-  try {
-    const upstreamResponse = await fetch(apiUrl, {
-      cache: "no-cache",
-    });
+//   try {
+//     const upstreamResponse = await fetch(apiUrl, {
+//       cache: "no-cache",
+//     });
 
-    if (!upstreamResponse.ok) {
-      return new Response("Failed to fetch resource", {
-        status: upstreamResponse.status,
-      });
-    }
+//     if (!upstreamResponse.ok) {
+//       return new Response("Failed to fetch resource", {
+//         status: upstreamResponse.status,
+//       });
+//     }
 
-    if (path.includes("/video_feed")) {
-      // Stream MJPEG as-is
-      return new Response(upstreamResponse.body, {
-        status: upstreamResponse.status,
-        headers: {
-          "Content-Type": "multipart/x-mixed-replace; boundary=frame",
-          "Cache-Control": "no-cache",
-        },
-      });
-    }
+//     if (path.includes("/video_feed")) {
+//       // Stream MJPEG as-is
+//       return new Response(upstreamResponse.body, {
+//         status: upstreamResponse.status,
+//         headers: {
+//           "Content-Type": "multipart/x-mixed-replace; boundary=frame",
+//           "Cache-Control": "no-cache",
+//         },
+//       });
+//     }
 
-    const data = await upstreamResponse.json();
-    return new Response(JSON.stringify(data), {
-      status: upstreamResponse.status,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (error) {
-    console.error("API Proxy Error:", error);
-    return new Response("Error fetching resource", { status: 500 });
-  }
-}
+//     const data = await upstreamResponse.json();
+//     return new Response(JSON.stringify(data), {
+//       status: upstreamResponse.status,
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     });
+//   } catch (error) {
+//     console.error("API Proxy Error:", error);
+//     return new Response("Error fetching resource", { status: 500 });
+//   }
+// }
 
 // export async function POST(request: Request) {
 //   const { searchParams } = new URL(request.url);
@@ -85,6 +85,67 @@ export async function GET(request: Request) {
 //     return new Response("Error forwarding request", { status: 500 });
 //   }
 // }
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const path = searchParams.get("path");
+  const command = searchParams.get("command");
+
+  if (!path) {
+    return new Response("Path is required", { status: 400 });
+  }
+
+  const isVideoFeed = path === "/video_feed";
+
+  if (path === "/control" && !command) {
+    return new Response("Control command is required for /control path", {
+      status: 400,
+    });
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_API_CAMERA_CONTROL_URL;
+  const urlObj = new URL(`${baseUrl}${path}`);
+
+  if (!isVideoFeed && command) {
+    urlObj.searchParams.append("command", command);
+  }
+
+  console.log("Final URL string:", urlObj.href);
+
+  try {
+    const upstreamResponse = await fetch(urlObj.href, {
+      cache: "no-cache",
+    });
+
+    if (!upstreamResponse.ok) {
+      return new Response("Failed to fetch resource", {
+        status: upstreamResponse.status,
+      });
+    }
+
+    if (isVideoFeed) {
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers: {
+          "Content-Type": "multipart/x-mixed-replace; boundary=frame",
+          "Cache-Control": "no-cache",
+        },
+      });
+    }
+
+    const data = await upstreamResponse.json();
+    return new Response(JSON.stringify(data), {
+      status: upstreamResponse.status,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("API Proxy Error:", error);
+    return new Response("Error fetching resource", { status: 500 });
+  }
+}
+
 
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
