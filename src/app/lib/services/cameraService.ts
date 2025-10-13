@@ -11,8 +11,8 @@ export const getCameraPosition = () =>
 //   axios.get(`${API_BASE}${camera_control_endpoints.live_position}`);
 
 
-export const sendCameraMovement = async(direction: string) => {
-  await axios.get(`${API_BASE}${camera_control_endpoints.move}${direction}`)
+export const sendCameraControl = async(command: string) => {
+  await axios.get(`${API_BASE}${camera_control_endpoints.control}${command}`)
 }
 
 export const pauseCamera = () => 

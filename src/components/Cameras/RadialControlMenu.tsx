@@ -4,7 +4,7 @@ import { IconChevronUp, IconChevronDown, IconChevronLeft, IconChevronRight, Icon
 import styles from "@/styles/camera.module.css";
 
 export default function RadialControlMenu(){
-    const { move, pause, resume,  status, loading } = useCamera();
+    const { control, status, loading } = useCamera();
     
     return(
         <div
@@ -32,7 +32,7 @@ export default function RadialControlMenu(){
             }}
             className={styles.button}
             disabled={status === "active"}
-            onClick={() => move("up")}
+            onClick={() => control("up")}
           >
             <IconChevronUp size={24} />
           </ActionIcon>
@@ -49,7 +49,7 @@ export default function RadialControlMenu(){
             }}
             className={styles.button}
             disabled={status === "active"}
-            onClick={() => move("down")}
+            onClick={() => control("down")}
           >
             <IconChevronDown size={24} />
           </ActionIcon>
@@ -66,7 +66,7 @@ export default function RadialControlMenu(){
             }}
             className={styles.button}
             disabled={status === "active"}
-            onClick={() => move("left")}
+            onClick={() => control("left")}
           >
             <IconChevronLeft size={24} />
           </ActionIcon>
@@ -83,7 +83,7 @@ export default function RadialControlMenu(){
             }}
             className={styles.button}
             disabled={status === "active"}
-            onClick={() => move("right")}
+            onClick={() => control("right")}
           >
             <IconChevronRight size={24} />
           </ActionIcon>
@@ -99,7 +99,7 @@ export default function RadialControlMenu(){
                   w={110}
                   h={110}
                   className={styles.button}
-                  onClick={resume}
+                  onClick={() => control("resume")}
                 >
                 <IconPlayerPlay size={30} />
               </ActionIcon> 
@@ -112,7 +112,7 @@ export default function RadialControlMenu(){
                   w={110}
                   h={110}
                   className={styles.button}
-                  onClick={pause}
+                  onClick={() => control("pause")}
                 >
                 <IconPlayerStop size={30} />
               </ActionIcon>

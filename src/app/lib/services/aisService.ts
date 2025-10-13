@@ -9,5 +9,5 @@ export const getTargetLocation = () => axios.get(`/api/ais?path=${ais_endpoints.
 
 export const getTrackingData = () => axios.get(`/api/ais?path=${ais_endpoints.tracking_data}`);
 
-export const getCameraStatus = () => axios.get(`/api/ais?path=${camera_control_endpoints.status}`);
+export const getCameraStatus = () => axios.get(`/api/camera?path=${camera_control_endpoints.status}`);
   

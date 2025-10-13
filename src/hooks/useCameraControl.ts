@@ -4,7 +4,7 @@ import {
   pauseCamera,
   resetCamera,
   resumeCamera,
-  sendCameraMovement,
+  sendCameraControl,
   setCameraPosition,
 } from "../app/lib/services/cameraService";
 import { getCameraStatus } from "@/app/lib/services/aisService";
@@ -70,10 +70,10 @@ export const useCameraControl = () => {
   // };
 
   // Control the camera (send commands like pan, tilt, zoom)
-  const move = async (direction:string)=>{
+  const control = async (command:string)=>{
     setLoading(true);
     try{
-      await(sendCameraMovement(direction));
+      await(sendCameraControl(command));
     }catch (error) {
       console.log(error)
     }finally{
@@ -148,7 +148,7 @@ export const useCameraControl = () => {
     loading,
     pause,
     resume,
-    move,
+    control,
     reset,
     fetchCachePosition,
     // fetchLivePosition,
