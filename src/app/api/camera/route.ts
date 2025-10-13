@@ -192,5 +192,3 @@ export async function POST(request: Request) {
     return new Response("Error forwarding request", { status: 500 });
   }
 }
-
-
