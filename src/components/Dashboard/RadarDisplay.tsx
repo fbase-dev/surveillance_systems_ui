@@ -148,12 +148,12 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         } else {
           aisArray = [aisData.ais].filter(Boolean);
         }
-        
+
         console.log("AIS Array:", aisArray);
-        
+
         // Process and deduplicate AIS targets (keep most recent per MMSI)
         const targetMap = new Map<string, AISTarget>();
-        
+
         aisArray.forEach((t: any, idx: number) => {
           const processed: AISTarget = {
             target_number: typeof t.target_number === "number" ? t.target_number : idx,
@@ -169,14 +169,14 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
             timestamp: t.timestamp,
             source: "ais",
           };
-          
+
           // Validate target
-          const valid = processed.mmsi && 
-            Number.isFinite(processed.latitude) && 
+          const valid = processed.mmsi &&
+            Number.isFinite(processed.latitude) &&
             Number.isFinite(processed.longitude) &&
-            Math.abs(processed.latitude) > 0.001 && 
+            Math.abs(processed.latitude) > 0.001 &&
             Math.abs(processed.longitude) > 0.001;
-          
+
           if (valid) {
             // Keep the most recent message per MMSI (last one in array wins)
             targetMap.set(processed.mmsi, processed);
@@ -184,12 +184,12 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
             console.log("Filtered out invalid target:", processed);
           }
         });
-        
+
         const processedAIS = Array.from(targetMap.values());
-        
+
         console.log("Final unique AIS targets:", processedAIS);
         console.log("Number of unique vessels:", processedAIS.length);
-       
+
         setAisTargets(processedAIS);
       } else {
         setAisTargets([]);
@@ -200,21 +200,21 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         const own = aisData.own;
         const lat = Number(own.latitude || own.lat || own.Latitude || NaN);
         const lon = Number(own.longitude || own.lon || own.Longitude || NaN);
-        
+
         if (Number.isFinite(lat) && Number.isFinite(lon)) {
           const vesselData = {
             mmsi: String(own.mmsi || own.MMSI || ''),
             name: own.name || own.vessel_name || own.shipname,
             latitude: lat,
             longitude: lon,
-            heading: Number.isFinite(Number(own.heading || own.true_heading || NaN)) 
-              ? Number(own.heading || own.true_heading) 
+            heading: Number.isFinite(Number(own.heading || own.true_heading || NaN))
+              ? Number(own.heading || own.true_heading)
               : undefined,
-            speed: Number.isFinite(Number(own.speed || own.sog || NaN)) 
-              ? Number(own.speed || own.sog) 
+            speed: Number.isFinite(Number(own.speed || own.sog || NaN))
+              ? Number(own.speed || own.sog)
               : undefined,
-            course: Number.isFinite(Number(own.course || own.cog || NaN)) 
-              ? Number(own.course || own.cog) 
+            course: Number.isFinite(Number(own.course || own.cog || NaN))
+              ? Number(own.course || own.cog)
               : undefined,
           };
           setOwnVesselData(vesselData);
@@ -331,15 +331,31 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
   }, []);
 
   // Map URL generation
-  const mapUrl = useMemo(() => {
+ const mapUrl = useMemo(() => {
     const mapKey = process.env.NEXT_PUBLIC_MAP_API_KEY;
-    const mapId = process.env.NEXT_PUBLIC_MAP_ID;
 
     if (!mapKey || !hasCenter) return "";
 
     const zoom = calculateMapZoom(radarRange);
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLon}&zoom=${zoom}&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=satellite&key=${mapKey}${mapId ? `&map_id=${mapId}` : ""}`;
-  }, [hasCenter, centerLat, centerLon, radarRange, calculateMapZoom]);
+    
+    // Build markers for own vessel and AIS targets
+    let markersParam = '';
+    
+    // Own vessel marker (green)
+    if (hasOwnFix) {
+      markersParam += `&markers=color:green|label:O|${centerLat},${centerLon}`;
+    }
+    
+    // AIS target markers (cyan/blue)
+    visibleTargets.forEach((target, idx) => {
+      if (idx < 50) { // Limit to 50 markers to avoid URL length issues
+        const label = target.name ? target.name.charAt(0).toUpperCase() : 'A';
+        markersParam += `&markers=color:blue|label:${label}|${target.latitude},${target.longitude}`;
+      }
+    });
+
+    return `https://maps.googleapis.com/maps/api/staticmap?v=3.35&center=${centerLat},${centerLon}&zoom=${zoom}&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=satellite${markersParam}&key=${mapKey}`;
+  }, [hasCenter, centerLat, centerLon, radarRange, calculateMapZoom, hasOwnFix, visibleTargets]);
 
   return (
     <Card p={0} h={CANVAS_SIZE + 100} style={{ backgroundColor: '#030E1B80' }}>
@@ -598,7 +614,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
                       shadowColor="black"
                       shadowBlur={2}
                     />
-                    
+
                     <KonvaText
                       text={`${bearing.toFixed(1)}°`}
                       x={x + 10}
