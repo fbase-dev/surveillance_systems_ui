@@ -35,23 +35,27 @@ export async function GET(request: Request) {
         }
         apiUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
 
-        // For downloads, we need to proxy the response
+        // For downloads, proxy the response with proper headers
         const downloadResponse = await fetch(apiUrl, { cache: "no-cache" });
 
         if (!downloadResponse.ok) {
           return new Response("Failed to download file", { status: 500 });
         }
 
-        // Get the file content and headers
+        // Get the file content
         const fileBuffer = await downloadResponse.arrayBuffer();
-        const contentType = downloadResponse.headers.get('content-type') || 'application/octet-stream';
-        const contentDisposition = downloadResponse.headers.get('content-disposition');
-
+        const contentType = downloadResponse.headers.get('content-type') || 'video/mp4';
+        
+        // Extract filename from path
+        const fileName = path.split('/').pop() || 'download.mp4';
+        
+        // Return with forced download headers
         return new Response(fileBuffer, {
           status: 200,
           headers: {
             'Content-Type': contentType,
-            ...(contentDisposition && { 'Content-Disposition': contentDisposition }),
+            'Content-Disposition': `attachment; filename="${fileName}"`,
+            'Cache-Control': 'no-cache',
           },
         });
 
@@ -59,6 +63,7 @@ export async function GET(request: Request) {
         return new Response("Invalid action. Use 'status', 'files', 'details', or 'download'", { status: 400 });
     }
 
+    // For non-download actions, fetch and return JSON
     const response = await fetch(apiUrl, {
       cache: "no-cache",
     });
@@ -107,9 +112,9 @@ export async function DELETE(request: Request) {
       });
     }
 
-    return new Response("File deleted successfully", {
+    return new Response(JSON.stringify({ message: "File deleted successfully" }), {
       status: 200,
-      headers: { "Content-Type": "text/plain" },
+      headers: { "Content-Type": "application/json" },
     });
 
   } catch (error) {
@@ -147,7 +152,8 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      return new Response(`Failed to rename file: ${response.statusText}`, {
+      const errorText = await response.text();
+      return new Response(`Failed to rename file: ${errorText}`, {
         status: response.status
       });
     }
