@@ -220,11 +220,11 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
 
   // Map zoom based on radar range
   const calculateMapZoom = useCallback((rangeNM: number) => {
-    if (rangeNM <= 1) return 15;
-    if (rangeNM <= 2) return 14;
-    if (rangeNM <= 5) return 13;
-    if (rangeNM <= 10) return 12;
-    if (rangeNM <= 20) return 11;
+    if (rangeNM <= 1) return 9;
+    if (rangeNM <= 2) return 8;
+    if (rangeNM <= 5) return 7;
+    if (rangeNM <= 10) return 6;
+    if (rangeNM <= 20) return 5;
     return 10;
   }, []);
 
@@ -260,15 +260,15 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
 
       {error && <Alert color="red" mx="sm">{error}</Alert>}
 
-      <div style={{ position: "relative", width: CANVAS_SIZE, margin: "auto" }}>
+      <div style={{ position: "relative", margin: "auto" }}>
         {/* Live Google Map Background */}
         {isLoaded && hasOwnFix && (
-          <div style={{ position: "absolute", width: CANVAS_SIZE, height: CANVAS_SIZE, transform: "rotate(90deg)", borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ position: "absolute", width: '100%' , height: CANVAS_SIZE,  borderRadius: 12, overflow: "hidden" }}>
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "100%" }}
               center={{ lat: centerLat, lng: centerLon }}
               zoom={zoom}
-              mapTypeId="satellite"
+           
               options={{
                 disableDefaultUI: true,
                 tilt: 0,
