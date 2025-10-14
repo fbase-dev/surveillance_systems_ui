@@ -1,7 +1,8 @@
 'use client'
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Card, Container, Group, Select, Badge, Alert, BackgroundImage } from "@mantine/core";
+import { Card,  Group, Select, Badge, Alert } from "@mantine/core";
 import { Stage, Layer, Circle, Line, Text as KonvaText, Shape } from "react-konva";
+import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
 
 // Types
 interface TTMTarget {
@@ -86,7 +87,6 @@ const polarToCartesian = (
   canvasSize = CANVAS_SIZE
 ) => {
   const radius = (distanceNM / maxRangeNM) * (canvasSize / 2);
-  // Rotate 90° clockwise: North starts from West (270°)
   const adjustedBearing = bearingDeg - 90;
   const angleRad = toRadians(adjustedBearing);
   const x = canvasSize / 2 + radius * Math.sin(angleRad);
@@ -110,6 +110,11 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
   const [isConnected, setIsConnected] = useState(false);
   const [selectedTarget, setSelectedTarget] = useState<TTMTarget | TLLTarget | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Google Maps API loader
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_MAP_API_KEY!,
+  });
 
   // Fetch radar data from dedicated endpoints in parallel
   const fetchRadarData = useCallback(async () => {
@@ -188,7 +193,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         setTllTargets([]);
       }
 
-      // Process OWN - Updated to handle radar data format
+      // Process OWN
       if (radarData.own) {
         const own = radarData.own;
         const lat = Number(own.latitude ?? own.lat ?? NaN);
@@ -197,14 +202,14 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           const vesselData = {
             latitude: lat,
             longitude: lon,
-            heading: Number.isFinite(Number(own.heading ?? own.course ?? own.true_course ?? NaN)) 
-              ? Number(own.heading ?? own.course ?? own.true_course) 
+            heading: Number.isFinite(Number(own.heading ?? own.course ?? own.true_course ?? NaN))
+              ? Number(own.heading ?? own.course ?? own.true_course)
               : undefined,
-            speed: Number.isFinite(Number(own.speed ?? own.spd_over_grnd_knots ?? NaN)) 
-              ? Number(own.speed ?? own.spd_over_grnd_knots) 
+            speed: Number.isFinite(Number(own.speed ?? own.spd_over_grnd_knots ?? NaN))
+              ? Number(own.speed ?? own.spd_over_grnd_knots)
               : undefined,
-            course: Number.isFinite(Number(own.course ?? own.true_course ?? NaN)) 
-              ? Number(own.course ?? own.true_course) 
+            course: Number.isFinite(Number(own.course ?? own.true_course ?? NaN))
+              ? Number(own.course ?? own.true_course)
               : undefined,
           };
           setOwnVesselData(vesselData);
@@ -271,6 +276,18 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
     };
   }, [hasOwnFix, currentOwnVessel]);
 
+  // Calculate map zoom based on radar range
+  const calculateMapZoom = useCallback((rangeNM: number) => {
+    if (rangeNM <= 1) return 9;
+    if (rangeNM <= 2) return 8;
+    if (rangeNM <= 5) return 7;
+    if (rangeNM <= 10) return 6;
+    if (rangeNM <= 20) return 5;
+    return 10;
+  }, []);
+
+  const zoom = calculateMapZoom(radarRange);
+
   // Visible targets within range
   const visibleTargets = useMemo(() => {
     if (!allTargets.length) return [];
@@ -334,27 +351,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
     }
   }, []);
 
-  // Calculate zoom level based on radar range
-  const calculateMapZoom = useCallback((rangeNM: number) => {
-    if (rangeNM <= 1) return 15;
-    if (rangeNM <= 2) return 14;
-    if (rangeNM <= 5) return 13;
-    if (rangeNM <= 10) return 12;
-    if (rangeNM <= 20) return 11;
-    return 10;
-  }, []);
-
-  // Map URL generation using Static Maps API
-  const mapUrl = useMemo(() => {
-    const mapKey = process.env.NEXT_PUBLIC_MAP_API_KEY;
-    const mapId = process.env.NEXT_PUBLIC_MAP_ID;
-
-    if (!mapKey || !hasCenter) return "";
-
-    const zoom = calculateMapZoom(radarRange);
-    return `https://maps.googleapis.com/maps/api/staticmap?center=${centerLat},${centerLon}&zoom=${zoom}&size=${CANVAS_SIZE}x${CANVAS_SIZE}&maptype=satellite&key=${mapKey}${mapId ? `&map_id=${mapId}` : ""}`;
-  }, [hasCenter, centerLat, centerLon, radarRange, calculateMapZoom]);
-
   return (
     <Card p={0} h={CANVAS_SIZE + 100} style={{ backgroundColor: '#030E1B80' }}>
       {/* Control Panel */}
@@ -374,6 +370,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           >
             {isConnected ? "Live Data" : "Disconnected"}
           </Badge>
+          <Badge color="blue">{allTargets.length} Targets</Badge>
         </Group>
       </Group>
 
@@ -384,277 +381,288 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         </Alert>
       )}
 
-      {/* Radar Display with Map Background */}
-      <BackgroundImage
-        src={mapUrl || ""}
-        style={{
-          backgroundColor: "#030E1B80",
-          backgroundBlendMode: "overlay"
-        }}
-      >
-        <div style={{ position: "relative", width: CANVAS_SIZE, margin: "auto" }}>
-          <Container p={0}>
-            <Stage width={CANVAS_SIZE} height={CANVAS_SIZE}>
-              <Layer>
-                {/* Range Rings */}
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Circle
-                    key={`ring-${i}`}
-                    x={CANVAS_SIZE / 2}
-                    y={CANVAS_SIZE / 2}
-                    radius={(i * CANVAS_SIZE) / 10}
-                    stroke="#EDF4FD"
-                    strokeWidth={0.5}
-                  />
-                ))}
+      {/* Radar Display with Live Map Background */}
+      <div style={{ position: "relative", width: CANVAS_SIZE, margin: "auto" }}>
+        {/* Live Google Map Background */}
+        {isLoaded && hasCenter && (
+          <div style={{
+            position: "absolute",
+            width: CANVAS_SIZE,
+            height: CANVAS_SIZE,
+           
+            borderRadius: 12,
+            overflow: "hidden"
+          }}>
+            <GoogleMap
+              mapContainerStyle={{ width: "100%", height: "100%" }}
+              center={{ lat: centerLat, lng: centerLon }}
+              zoom={zoom}
+            
+              options={{
+                disableDefaultUI: true,
+                tilt: 0,
+                heading: 0,
+              }}
+            />
+          </div>
+        )}
 
-                {/* Cross Lines */}
+        {/* Radar Overlay */}
+        <Stage width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ position: "relative", zIndex: 100 }}>
+          <Layer>
+            {/* Range Rings */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Circle
+                key={`ring-${i}`}
+                x={CANVAS_SIZE / 2}
+                y={CANVAS_SIZE / 2}
+                radius={(i * CANVAS_SIZE) / 10}
+                stroke="#EDF4FD"
+                strokeWidth={0.5}
+              />
+            ))}
+
+            {/* Cross Lines */}
+            <Line
+              points={[CANVAS_SIZE / 2, 0, CANVAS_SIZE / 2, CANVAS_SIZE]}
+              stroke="white"
+              strokeWidth={1}
+            />
+            <Line
+              points={[0, CANVAS_SIZE / 2, CANVAS_SIZE, CANVAS_SIZE / 2]}
+              stroke="white"
+              strokeWidth={1}
+            />
+
+            {/* Range Labels */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <KonvaText
+                key={`label-${i}`}
+                text={`${(radarRange * i) / 5} NM`}
+                x={CANVAS_SIZE / 2 + 5}
+                y={CANVAS_SIZE / 2 - (i * CANVAS_SIZE) / 10 - 5}
+                fontSize={8}
+                fill="white"
+              />
+            ))}
+
+            {/* Radar Sweep */}
+            <Shape
+              sceneFunc={(context, shape) => {
+                context.beginPath();
+                context.moveTo(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
+                context.arc(
+                  CANVAS_SIZE / 2,
+                  CANVAS_SIZE / 2,
+                  CANVAS_SIZE / 2,
+                  toRadians(sweepAngle - 120),
+                  toRadians(sweepAngle - 60)
+                );
+                context.closePath();
+                context.fillStrokeShape(shape);
+              }}
+              fillLinearGradientStartPoint={{ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 }}
+              fillLinearGradientEndPoint={{
+                x: CANVAS_SIZE / 2 + (CANVAS_SIZE / 2) * Math.sin(toRadians(sweepAngle - 90)),
+                y: CANVAS_SIZE / 2 - (CANVAS_SIZE / 2) * Math.cos(toRadians(sweepAngle - 90)),
+              }}
+              fillLinearGradientColorStops={[0, "rgba(255,0,255,0.3)", 1, "rgba(255,0,255,0)"]}
+            />
+
+            {/* Center Point (Own Vessel) - Clickable */}
+            <Circle
+              x={CANVAS_SIZE / 2}
+              y={CANVAS_SIZE / 2}
+              radius={6}
+              fill="#00ff00"
+              stroke="white"
+              strokeWidth={2}
+              onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
+              onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
+              onClick={() => {
+                if (hasOwnFix && ownVesselData) {
+                  const ownAsTarget: TTMTarget = {
+                    target_number: -1,
+                    distance: 0,
+                    bearing: ownVesselData.heading || 0,
+                    speed: ownVesselData.speed || 0,
+                    course: ownVesselData.course || ownVesselData.heading || 0,
+                    latitude: ownVesselData.latitude,
+                    longitude: ownVesselData.longitude,
+                    status: 'Own Vessel',
+                    source: 'ttm',
+                  };
+                  const isSameTarget = selectedTarget?.target_number === -1;
+                  const newSelection = isSameTarget ? null : ownAsTarget;
+                  setSelectedTarget(newSelection);
+                  onTargetSelect?.(newSelection);
+                }
+              }}
+            />
+
+            {/* Heading Line */}
+            {hasOwnFix && Number.isFinite(currentOwnVessel.heading) && (
+              <>
                 <Line
-                  points={[CANVAS_SIZE / 2, 0, CANVAS_SIZE / 2, CANVAS_SIZE]}
-                  stroke="white"
-                  strokeWidth={1}
+                  points={[
+                    CANVAS_SIZE / 2,
+                    CANVAS_SIZE / 2,
+                    CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90)),
+                    CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90)),
+                  ]}
+                  stroke="#00ff00"
+                  strokeWidth={3}
+                  lineCap="round"
                 />
-                <Line
-                  points={[0, CANVAS_SIZE / 2, CANVAS_SIZE, CANVAS_SIZE / 2]}
-                  stroke="white"
-                  strokeWidth={1}
-                />
-
-                {/* Range Labels */}
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <KonvaText
-                    key={`label-${i}`}
-                    text={`${(radarRange * i) / 5} NM`}
-                    x={CANVAS_SIZE / 2 + 5}
-                    y={CANVAS_SIZE / 2 - (i * CANVAS_SIZE) / 10 - 5}
-                    fontSize={8}
-                    fill="white"
-                  />
-                ))}
-
-                {/* Radar Sweep */}
-                <Shape
-                  sceneFunc={(context, shape) => {
-                    context.beginPath();
-                    context.moveTo(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
-                    context.arc(
-                      CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2,
-                      CANVAS_SIZE / 2,
-                      toRadians(sweepAngle - 30 - 90),
-                      toRadians(sweepAngle + 30 - 90)
-                    );
-                    context.closePath();
-                    context.fillStrokeShape(shape);
-                  }}
-                  fillLinearGradientStartPoint={{ x: CANVAS_SIZE / 2, y: CANVAS_SIZE / 2 }}
-                  fillLinearGradientEndPoint={{
-                    x: CANVAS_SIZE / 25 + (CANVAS_SIZE / 2) * Math.sin(toRadians(sweepAngle - 90)),
-                    y: CANVAS_SIZE / 25 - (CANVAS_SIZE / 2) * Math.cos(toRadians(sweepAngle - 90)),
-                  }}
-                  fillLinearGradientColorStops={[0, "rgba(255,0,255,0.3)", 1, "rgba(255,0,255,0)"]}
-                />
-
-                {/* Center Point (Own Vessel) - Enhanced and Clickable */}
                 <Circle
-                  x={CANVAS_SIZE / 2}
-                  y={CANVAS_SIZE / 2}
-                  radius={6}
+                  x={CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90))}
+                  y={CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90))}
+                  radius={3}
                   fill="#00ff00"
-                  stroke="white"
-                  strokeWidth={2}
-                  onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
-                  onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
-                  onClick={() => {
-                    if (hasOwnFix && ownVesselData) {
-                      // Create a target-like representation of own vessel
-                      const ownAsTarget: TTMTarget = {
-                        target_number: -1,
-                        distance: 0,
-                        bearing: ownVesselData.heading || 0,
-                        speed: ownVesselData.speed || 0,
-                        course: ownVesselData.course || ownVesselData.heading || 0,
-                        latitude: ownVesselData.latitude,
-                        longitude: ownVesselData.longitude,
-                        status: 'Own Vessel',
-                        source: 'ttm',
-                      };
-                      const isSameTarget = selectedTarget?.target_number === -1;
-                      const newSelection = isSameTarget ? null : ownAsTarget;
-                      setSelectedTarget(newSelection);
-                      onTargetSelect?.(newSelection);
-                    }
-                  }}
                 />
+              </>
+            )}
 
-                {/* Heading Line - Enhanced */}
-                {hasOwnFix && Number.isFinite(currentOwnVessel.heading) && (
-                  <>
+            {/* Own Vessel Label */}
+            {hasOwnFix && (
+              <KonvaText
+                text="OWN"
+                x={CANVAS_SIZE / 2 - 15}
+                y={CANVAS_SIZE / 2 + 12}
+                fontSize={10}
+                fill="#00ff00"
+                fontStyle="bold"
+                shadowColor="black"
+                shadowBlur={3}
+              />
+            )}
+
+            {/* Compass Labels */}
+            <KonvaText text="N" x={5} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+            <KonvaText text="S" x={CANVAS_SIZE - 15} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
+            <KonvaText text="W" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 18} fontSize={12} fill="white" fontStyle="bold" />
+            <KonvaText text="E" x={CANVAS_SIZE / 2 - 5} y={5} fontSize={12} fill="white" fontStyle="bold" />
+
+            {/* Radar Targets */}
+            {visibleTargets.map((target, idx) => {
+              let x: number, y: number;
+              let distance: number, bearing: number;
+
+              if (target.source === 'ttm') {
+                const ttmTarget = target as TTMTarget;
+
+                if (Number.isFinite(ttmTarget.distance) && Number.isFinite(ttmTarget.bearing)) {
+                  distance = ttmTarget.distance;
+                  bearing = ttmTarget.bearing;
+                }
+                else if (hasCenter && Number.isFinite(ttmTarget.latitude) && Number.isFinite(ttmTarget.longitude)) {
+                  distance = haversineDistanceNM(centerLat, centerLon, ttmTarget.latitude!, ttmTarget.longitude!);
+                  bearing = bearingFromTo(centerLat, centerLon, ttmTarget.latitude!, ttmTarget.longitude!);
+                } else {
+                  return null;
+                }
+
+                const coords = polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE);
+                x = coords.x;
+                y = coords.y;
+              } else {
+                const tllTarget = target as TLLTarget;
+                if (!hasCenter) return null;
+                distance = haversineDistanceNM(centerLat, centerLon, tllTarget.latitude, tllTarget.longitude);
+                bearing = bearingFromTo(centerLat, centerLon, tllTarget.latitude, tllTarget.longitude);
+                const coords = polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE);
+                x = coords.x;
+                y = coords.y;
+              }
+
+              const uniqueKey = `${target.source}-${target.target_number}-${idx}`;
+
+              // Course/Speed vector for TTM targets
+              let courseVector: { x2: number; y2: number } | null = null;
+              if (target.source === 'ttm') {
+                const ttmTarget = target as TTMTarget;
+                if (Number.isFinite(ttmTarget.speed) && Number.isFinite(ttmTarget.course) && ttmTarget.speed > 0.1) {
+                  const vectorLength = Math.min(ttmTarget.speed * 3, 30);
+                  const courseRad = toRadians(ttmTarget.course);
+                  courseVector = {
+                    x2: x + vectorLength * Math.sin(courseRad),
+                    y2: y - vectorLength * Math.cos(courseRad),
+                  };
+                }
+              }
+
+              return (
+                <React.Fragment key={uniqueKey}>
+                  {/* Distance line from own vessel to target */}
+                  <Line
+                    points={[CANVAS_SIZE / 2, CANVAS_SIZE / 2, x, y]}
+                    stroke={getTargetColor(target)}
+                    strokeWidth={0.5}
+                    dash={[5, 5]}
+                    opacity={0.4}
+                  />
+
+                  {/* Target Circle */}
+                  <Circle
+                    x={x}
+                    y={y}
+                    radius={7}
+                    fill={getTargetColor(target)}
+                    stroke={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
+                    strokeWidth={2}
+                    onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
+                    onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
+                    onClick={() => handleTargetClick(target)}
+                  />
+
+                  {/* Course Vector */}
+                  {courseVector && (
                     <Line
-                      points={[
-                        CANVAS_SIZE / 2,
-                        CANVAS_SIZE / 2,
-                        CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90)),
-                        CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90)),
-                      ]}
-                      stroke="#00ff00"
-                      strokeWidth={3}
+                      points={[x, y, courseVector.x2, courseVector.y2]}
+                      stroke="#ff00ff"
+                      strokeWidth={2}
                       lineCap="round"
                     />
-                    {/* Heading indicator arrowhead */}
-                    <Circle
-                      x={CANVAS_SIZE / 2 + 40 * Math.sin(toRadians(currentOwnVessel.heading! - 90))}
-                      y={CANVAS_SIZE / 2 - 40 * Math.cos(toRadians(currentOwnVessel.heading! - 90))}
-                      radius={3}
-                      fill="#00ff00"
-                    />
-                  </>
-                )}
+                  )}
 
-                {/* Own Vessel Label */}
-                {hasOwnFix && (
+                  {/* Target Label */}
                   <KonvaText
-                    text="OWN"
-                    x={CANVAS_SIZE / 2 - 15}
-                    y={CANVAS_SIZE / 2 + 12}
+                    text={`T${target.target_number}`}
+                    x={x + 10}
+                    y={y - 20}
                     fontSize={10}
-                    fill="#00ff00"
+                    fill="white"
                     fontStyle="bold"
                     shadowColor="black"
                     shadowBlur={3}
                   />
-                )}
 
-                {/* Compass Labels */}
-                <KonvaText text="N" x={5} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
-                <KonvaText text="S" x={CANVAS_SIZE - 15} y={CANVAS_SIZE / 2 - 6} fontSize={12} fill="white" fontStyle="bold" />
-                <KonvaText text="W" x={CANVAS_SIZE / 2 - 5} y={CANVAS_SIZE - 18} fontSize={12} fill="white" fontStyle="bold" />
-                <KonvaText text="E" x={CANVAS_SIZE / 2 - 5} y={5} fontSize={12} fill="white" fontStyle="bold" />
+                  {/* Distance and Bearing */}
+                  <KonvaText
+                    text={`${distance.toFixed(2)} NM`}
+                    x={x + 10}
+                    y={y - 8}
+                    fontSize={9}
+                    fill={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
+                    shadowColor="black"
+                    shadowBlur={2}
+                  />
 
-                {/* Radar Targets */}
-                {visibleTargets.map((target, idx) => {
-                  let x: number, y: number;
-                  let distance: number, bearing: number;
-
-                  if (target.source === 'ttm') {
-                    const ttmTarget = target as TTMTarget;
-
-                    if (Number.isFinite(ttmTarget.distance) && Number.isFinite(ttmTarget.bearing)) {
-                      distance = ttmTarget.distance;
-                      bearing = ttmTarget.bearing;
-                    }
-                    else if (hasCenter && Number.isFinite(ttmTarget.latitude) && Number.isFinite(ttmTarget.longitude)) {
-                      distance = haversineDistanceNM(centerLat, centerLon, ttmTarget.latitude!, ttmTarget.longitude!);
-                      bearing = bearingFromTo(centerLat, centerLon, ttmTarget.latitude!, ttmTarget.longitude!);
-                    } else {
-                      return null;
-                    }
-
-                    const coords = polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE);
-                    x = coords.x;
-                    y = coords.y;
-                  } else {
-                    const tllTarget = target as TLLTarget;
-                    if (!hasCenter) return null;
-                    distance = haversineDistanceNM(centerLat, centerLon, tllTarget.latitude, tllTarget.longitude);
-                    bearing = bearingFromTo(centerLat, centerLon, tllTarget.latitude, tllTarget.longitude);
-                    const coords = polarToCartesian(distance, bearing, radarRange, CANVAS_SIZE);
-                    x = coords.x;
-                    y = coords.y;
-                  }
-
-                  const uniqueKey = `${target.source}-${target.target_number}-${idx}`;
-
-                  // Course/Speed vector for TTM targets
-                  let courseVector: { x2: number; y2: number } | null = null;
-                  if (target.source === 'ttm') {
-                    const ttmTarget = target as TTMTarget;
-                    if (Number.isFinite(ttmTarget.speed) && Number.isFinite(ttmTarget.course) && ttmTarget.speed > 0.1) {
-                      const vectorLength = Math.min(ttmTarget.speed * 3, 30);
-                      const courseRad = toRadians(ttmTarget.course);
-                      courseVector = {
-                        x2: x + vectorLength * Math.sin(courseRad),
-                        y2: y - vectorLength * Math.cos(courseRad),
-                      };
-                    }
-                  }
-
-                  return (
-                    <React.Fragment key={uniqueKey}>
-                      {/* Distance line from own vessel to target */}
-                      <Line
-                        points={[CANVAS_SIZE / 2, CANVAS_SIZE / 2, x, y]}
-                        stroke={getTargetColor(target)}
-                        strokeWidth={0.5}
-                        dash={[5, 5]}
-                        opacity={0.4}
-                      />
-
-                      {/* Target Circle */}
-                      <Circle
-                        x={x}
-                        y={y}
-                        radius={7}
-                        fill={getTargetColor(target)}
-                        stroke={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
-                        strokeWidth={2}
-                        onMouseEnter={(e) => setCursor(e.target.getStage(), "pointer")}
-                        onMouseLeave={(e) => setCursor(e.target.getStage(), "default")}
-                        onClick={() => handleTargetClick(target)}
-                      />
-
-                      {/* Course Vector */}
-                      {courseVector && (
-                        <Line
-                          points={[x, y, courseVector.x2, courseVector.y2]}
-                          stroke="#ff00ff"
-                          strokeWidth={2}
-                          lineCap="round"
-                        />
-                      )}
-
-                      {/* Target Label */}
-                      <KonvaText
-                        text={`T${target.target_number}`}
-                        x={x + 10}
-                        y={y - 20}
-                        fontSize={10}
-                        fill="white"
-                        fontStyle="bold"
-                        shadowColor="black"
-                        shadowBlur={3}
-                      />
-
-                      {/* Distance and Bearing - Enhanced */}
-                      <KonvaText
-                        text={`${distance.toFixed(2)} NM`}
-                        x={x + 10}
-                        y={y - 8}
-                        fontSize={9}
-                        fill={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
-                        shadowColor="black"
-                        shadowBlur={2}
-                      />
-                      
-                      <KonvaText
-                        text={`${bearing.toFixed(1)}°`}
-                        x={x + 10}
-                        y={y + 2}
-                        fontSize={9}
-                        fill={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
-                        shadowColor="black"
-                        shadowBlur={2}
-                      />
-                    </React.Fragment>
-                  );
-                })}
-              </Layer>
-            </Stage>
-          </Container>
-        </div>
-      </BackgroundImage>
-
-     
+                  <KonvaText
+                    text={`${bearing.toFixed(1)}°`}
+                    x={x + 10}
+                    y={y + 2}
+                    fontSize={9}
+                    fill={target.source === 'ttm' ? "#ff00ff" : "#00ffff"}
+                    shadowColor="black"
+                    shadowBlur={2}
+                  />
+                </React.Fragment>
+              );
+            })}
+          </Layer>
+        </Stage>
+      </div>
     </Card>
   );
 };
