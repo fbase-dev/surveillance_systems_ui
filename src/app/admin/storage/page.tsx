@@ -32,7 +32,6 @@ import {
     IconDots,
     IconInfoCircle,
     IconCheck,
-
 } from '@tabler/icons-react';
 
 interface FileDetails {
@@ -59,7 +58,7 @@ export default function StoragePage() {
     const [newFileName, setNewFileName] = useState('');
     const [fileDetails, setFileDetails] = useState<FileDetails | null>(null);
     const [error, setError] = useState('');
-
+    const [success, setSuccess] = useState('');
 
     const fetchStatus = async () => {
         try {
@@ -69,9 +68,9 @@ export default function StoragePage() {
             setStatus(data);
         } catch (err) {
             console.error('Failed to fetch status:', err);
+            setError('Failed to connect to hardware storage');
         }
     };
-
 
     const fetchFiles = async () => {
         setLoading(true);
@@ -81,13 +80,9 @@ export default function StoragePage() {
             if (!response.ok) throw new Error('Failed to fetch files');
             const data = await response.json();
 
-
             console.log('API Response:', data);
-            console.log('Response type:', typeof data);
-            console.log('Is array:', Array.isArray(data));
 
-
-            let fileList = [];
+            let fileList: string[] = [];
             if (Array.isArray(data)) {
                 fileList = data;
             } else if (data.files && Array.isArray(data.files)) {
@@ -95,12 +90,11 @@ export default function StoragePage() {
             } else if (data.mp4_files && Array.isArray(data.mp4_files)) {
                 fileList = data.mp4_files;
             } else if (typeof data === 'object') {
-
                 fileList = Object.keys(data).filter(key => key.endsWith('.mp4'));
                 if (fileList.length === 0) {
                     fileList = Object.values(data).filter(val =>
                         typeof val === 'string' && val.endsWith('.mp4')
-                    );
+                    ) as string[];
                 }
             }
 
@@ -113,7 +107,6 @@ export default function StoragePage() {
             setLoading(false);
         }
     };
-
 
     const fetchFileDetails = async (fileName: string) => {
         try {
@@ -128,20 +121,22 @@ export default function StoragePage() {
         }
     };
 
-
     const downloadFile = (fileName: string) => {
-        if (typeof window !== 'undefined') {
+        try {
             const url = `/api/storage?action=download&path=videoes/${fileName}`;
-            window.open(url, '_blank');
+            window.location.href = url;
+            setSuccess(`Downloading ${fileName}...`);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError('Failed to initiate download');
+            console.error('Download error:', err);
         }
     };
-
 
     const confirmDelete = (fileName: string) => {
         setFileToDelete(fileName);
         setDeleteConfirmOpen(true);
     };
-
 
     const deleteFile = async () => {
         if (!fileToDelete) return;
@@ -152,8 +147,9 @@ export default function StoragePage() {
             });
 
             if (response.ok) {
+                setSuccess(`Successfully deleted ${fileToDelete}`);
+                setTimeout(() => setSuccess(''), 3000);
                 await fetchFiles();
-                setError('');
                 setDeleteConfirmOpen(false);
                 setFileToDelete(null);
             } else {
@@ -165,28 +161,35 @@ export default function StoragePage() {
         }
     };
 
-
     const renameFile = async () => {
         if (!newFileName.trim() || !selectedFile) return;
 
+        // Ensure the new filename has the correct extension
+        let finalFileName = newFileName.trim();
+        if (!finalFileName.endsWith('.mp4')) {
+            finalFileName += '.mp4';
+        }
+
         try {
-            const response = await fetch('/api/files/rename', {
+            const response = await fetch('/api/storage', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    action: 'rename',
                     old_path: `videoes/${selectedFile}`,
-                    new_name: newFileName
+                    new_name: finalFileName
                 }),
             });
 
             if (response.ok) {
+                setSuccess(`Successfully renamed to ${finalFileName}`);
+                setTimeout(() => setSuccess(''), 3000);
                 setRenameModalOpen(false);
                 setNewFileName('');
                 setSelectedFile(null);
                 await fetchFiles();
-                setError('');
             } else {
                 throw new Error('Failed to rename file');
             }
@@ -195,8 +198,6 @@ export default function StoragePage() {
             console.error('Failed to rename file:', err);
         }
     };
-
-
 
     useEffect(() => {
         fetchStatus();
@@ -209,12 +210,16 @@ export default function StoragePage() {
                 {/* Header */}
                 <Group justify="space-between">
                     <Title order={2}>Video Storage Management</Title>
-                    <Button leftSection={<IconRefresh size={16} />} onClick={fetchFiles} loading={loading}>
+                    <Button 
+                        leftSection={<IconRefresh size={16} />} 
+                        onClick={fetchFiles} 
+                        loading={loading}
+                    >
                         Refresh
                     </Button>
                 </Group>
 
-
+                {/* Hardware Status */}
                 {status && (
                     <Paper p="md" withBorder>
                         <Group justify="space-between" mb="xs">
@@ -234,14 +239,21 @@ export default function StoragePage() {
                     </Paper>
                 )}
 
+                {/* Success Alert */}
+                {success && (
+                    <Alert icon={<IconCheck size={16} />} color="green" onClose={() => setSuccess('')}>
+                        {success}
+                    </Alert>
+                )}
 
+                {/* Error Alert */}
                 {error && (
                     <Alert icon={<IconAlertCircle size={16} />} color="red" onClose={() => setError('')}>
                         {error}
                     </Alert>
                 )}
 
-
+                {/* Files Table */}
                 <Card withBorder>
                     <Card.Section p="md" withBorder>
                         <Group justify="space-between">
@@ -263,7 +275,6 @@ export default function StoragePage() {
                                 <Table.Thead>
                                     <Table.Tr>
                                         <Table.Th>File Name</Table.Th>
-                                        {/* <Table.Th>Date Created</Table.Th> */}
                                         <Table.Th>Type</Table.Th>
                                         <Table.Th>Actions</Table.Th>
                                     </Table.Tr>
@@ -277,11 +288,6 @@ export default function StoragePage() {
                                                     <Text size="sm">{file}</Text>
                                                 </Group>
                                             </Table.Td>
-                                            {/* <Table.Td>
-                                                <Text size="sm" c="dimmed">
-                                                    {extractDate(file)}
-                                                </Text>
-                                            </Table.Td> */}
                                             <Table.Td>
                                                 <Badge variant="light" size="sm">
                                                     {file.split('.').pop()?.toUpperCase() || 'UNKNOWN'}
@@ -324,14 +330,12 @@ export default function StoragePage() {
                                                                 leftSection={<IconEdit style={{ width: rem(14), height: rem(14) }} />}
                                                                 onClick={() => {
                                                                     setSelectedFile(file);
-                                                                    setNewFileName(file);
+                                                                    setNewFileName(file.replace('.mp4', ''));
                                                                     setRenameModalOpen(true);
                                                                 }}
                                                             >
                                                                 Rename
                                                             </Menu.Item>
-
-
 
                                                             <Menu.Item
                                                                 color="red"
@@ -351,6 +355,8 @@ export default function StoragePage() {
                         </Table.ScrollContainer>
                     )}
                 </Card>
+
+                {/* Delete Confirmation Modal */}
                 <Modal
                     size="auto"
                     opened={deleteConfirmOpen}
@@ -362,7 +368,7 @@ export default function StoragePage() {
                 >
                     <Stack>
                         <Text>
-                            Are you sure you want to delete {fileToDelete}? This action cannot be undone.
+                            Are you sure you want to delete <strong>{fileToDelete}</strong>? This action cannot be undone.
                         </Text>
 
                         <Group justify="flex-end" mt="md">
@@ -382,7 +388,7 @@ export default function StoragePage() {
                     </Stack>
                 </Modal>
 
-
+                {/* Rename Modal */}
                 <Modal
                     size="auto"
                     opened={renameModalOpen}
@@ -395,18 +401,26 @@ export default function StoragePage() {
                 >
                     <Stack>
                         <Text size="sm" c="dimmed">
-                            Renaming: {selectedFile}
+                            Renaming: <strong>{selectedFile}</strong>
                         </Text>
 
                         <TextInput
                             label="New file name"
-                            placeholder="Enter new name"
+                            placeholder="Enter new name (without .mp4)"
                             value={newFileName}
                             onChange={(e) => setNewFileName(e.currentTarget.value)}
+                            description="The .mp4 extension will be added automatically"
                         />
 
                         <Group justify="flex-end" mt="md">
-                            <Button variant="light" onClick={() => setRenameModalOpen(false)}>
+                            <Button 
+                                variant="light" 
+                                onClick={() => {
+                                    setRenameModalOpen(false);
+                                    setNewFileName('');
+                                    setSelectedFile(null);
+                                }}
+                            >
                                 Cancel
                             </Button>
                             <Button onClick={renameFile} disabled={!newFileName.trim()}>
@@ -416,7 +430,7 @@ export default function StoragePage() {
                     </Stack>
                 </Modal>
 
-
+                {/* File Details Modal */}
                 <Modal
                     opened={detailsModalOpen}
                     onClose={() => {
@@ -429,9 +443,9 @@ export default function StoragePage() {
                     {fileDetails ? (
                         <Stack>
                             {Object.entries(fileDetails).map(([key, value]) => (
-                                <Group key={key} justify="space-between">
+                                <Group key={key} justify="space-between" align="flex-start">
                                     <Text fw={500} tt="capitalize">{key.replace(/_/g, ' ')}:</Text>
-                                    <Text c="dimmed" ta="right" style={{ wordBreak: 'break-all' }}>
+                                    <Text c="dimmed" ta="right" style={{ wordBreak: 'break-all', maxWidth: '60%' }}>
                                         {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
                                     </Text>
                                 </Group>
