@@ -389,7 +389,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
             position: "absolute",
             width: CANVAS_SIZE,
             height: CANVAS_SIZE,
-           
             borderRadius: 12,
             overflow: "hidden"
           }}>
@@ -397,7 +396,6 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
               mapContainerStyle={{ width: "100%", height: "100%" }}
               center={{ lat: centerLat, lng: centerLon }}
               zoom={zoom}
-            
               options={{
                 disableDefaultUI: true,
                 tilt: 0,
@@ -410,17 +408,20 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         {/* Radar Overlay */}
         <Stage width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ position: "relative", zIndex: 100 }}>
           <Layer>
-            {/* Range Rings */}
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Circle
-                key={`ring-${i}`}
-                x={CANVAS_SIZE / 2}
-                y={CANVAS_SIZE / 2}
-                radius={(i * CANVAS_SIZE) / 10}
-                stroke="#EDF4FD"
-                strokeWidth={0.5}
-              />
-            ))}
+            {/* Range Rings - Now proportional to radar range */}
+            {[1, 2, 3, 4, 5].map((i) => {
+              const ringRadius = (i / 5) * (CANVAS_SIZE / 2);
+              return (
+                <Circle
+                  key={`ring-${i}`}
+                  x={CANVAS_SIZE / 2}
+                  y={CANVAS_SIZE / 2}
+                  radius={ringRadius}
+                  stroke="#EDF4FD"
+                  strokeWidth={0.5}
+                />
+              );
+            })}
 
             {/* Cross Lines */}
             <Line

@@ -281,9 +281,20 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         {/* Radar Overlay */}
         <Stage width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ position: "relative", zIndex: 100 }}>
           <Layer>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Circle key={i} x={CANVAS_SIZE / 2} y={CANVAS_SIZE / 2} radius={(i * CANVAS_SIZE) / 10} stroke="#EDF4FD" strokeWidth={0.5} />
-            ))}
+            {/* Radar rings - now proportional to range */}
+            {[1, 2, 3, 4, 5].map((i) => {
+              const ringRadius = (i / 5) * (CANVAS_SIZE / 2);
+              return (
+                <Circle 
+                  key={i} 
+                  x={CANVAS_SIZE / 2} 
+                  y={CANVAS_SIZE / 2} 
+                  radius={ringRadius} 
+                  stroke="#EDF4FD" 
+                  strokeWidth={0.5} 
+                />
+              );
+            })}
             <Line points={[CANVAS_SIZE / 2, 0, CANVAS_SIZE / 2, CANVAS_SIZE]} stroke="white" />
             <Line points={[0, CANVAS_SIZE / 2, CANVAS_SIZE, CANVAS_SIZE / 2]} stroke="white" />
 
@@ -299,11 +310,18 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
               />
             ))}
 
+            {/* Sweep effect - now proportional to range */}
             <Shape
               sceneFunc={(ctx, shape) => {
                 ctx.beginPath();
                 ctx.moveTo(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
-                ctx.arc(CANVAS_SIZE / 2, CANVAS_SIZE / 2, CANVAS_SIZE / 2, toRadians(sweepAngle - 120), toRadians(sweepAngle - 60));
+                ctx.arc(
+                  CANVAS_SIZE / 2, 
+                  CANVAS_SIZE / 2, 
+                  CANVAS_SIZE / 2, 
+                  toRadians(sweepAngle - 120), 
+                  toRadians(sweepAngle - 60)
+                );
                 ctx.closePath();
                 ctx.fillStrokeShape(shape);
               }}
