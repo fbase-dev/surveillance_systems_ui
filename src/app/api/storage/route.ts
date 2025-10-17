@@ -1,5 +1,3 @@
-// app/api/storage/route.ts
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get("path");
@@ -35,28 +33,49 @@ export async function GET(request: Request) {
         }
         apiUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
 
-        // For downloads, proxy the response with proper headers
-        const downloadResponse = await fetch(apiUrl, { cache: "no-cache" });
+        // For downloads, stream the response directly without buffering
+        const downloadResponse = await fetch(apiUrl, { 
+          cache: "no-cache",
+          headers: {
+            'Accept': 'video/mp4,video/*,*/*'
+          },
+          // Add signal for better timeout handling
+          signal: AbortSignal.timeout(300000) // 5 minutes timeout
+        });
 
         if (!downloadResponse.ok) {
-          return new Response("Failed to download file", { status: 500 });
+          const errorText = await downloadResponse.text();
+          console.error('Download failed:', errorText);
+          return new Response(`Failed to download file: ${downloadResponse.statusText}`, { 
+            status: downloadResponse.status 
+          });
         }
 
-        // Get the file content
-        const fileBuffer = await downloadResponse.arrayBuffer();
         const contentType = downloadResponse.headers.get('content-type') || 'video/mp4';
+        const contentLength = downloadResponse.headers.get('content-length');
         
         // Extract filename from path
         const fileName = path.split('/').pop() || 'download.mp4';
         
-        // Return with forced download headers
-        return new Response(fileBuffer, {
+        // Return with proper download headers - stream the body directly
+        const headers: HeadersInit = {
+          'Content-Type': contentType,
+          'Content-Disposition': `attachment; filename="${fileName}"`,
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Accept-Ranges': 'bytes',
+        };
+
+        // Add content length if available
+        if (contentLength) {
+          headers['Content-Length'] = contentLength;
+        }
+
+        // Stream the response body directly instead of buffering
+        return new Response(downloadResponse.body, {
           status: 200,
-          headers: {
-            'Content-Type': contentType,
-            'Content-Disposition': `attachment; filename="${fileName}"`,
-            'Cache-Control': 'no-cache',
-          },
+          headers,
         });
 
       default:
@@ -69,6 +88,8 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error:', errorText);
       return new Response(`Failed to fetch storage data: ${response.statusText}`, {
         status: response.status
       });
@@ -85,7 +106,9 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Storage API Error:', error);
-    return new Response("Internal server error", { status: 500 });
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500 
+    });
   }
 }
 
@@ -107,19 +130,24 @@ export async function DELETE(request: Request) {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Delete failed:', errorText);
       return new Response(`Failed to delete file: ${response.statusText}`, {
         status: response.status
       });
     }
 
-    return new Response(JSON.stringify({ message: "File deleted successfully" }), {
+    const data = await response.json();
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
 
   } catch (error) {
     console.error('Delete API Error:', error);
-    return new Response("Internal server error", { status: 500 });
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500 
+    });
   }
 }
 
@@ -153,6 +181,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('Rename failed:', errorText);
       return new Response(`Failed to rename file: ${errorText}`, {
         status: response.status
       });
@@ -166,6 +195,8 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Rename API Error:', error);
-    return new Response("Internal server error", { status: 500 });
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500 
+    });
   }
 }
