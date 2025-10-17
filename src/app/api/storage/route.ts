@@ -1,4 +1,4 @@
-export const runtime = 'nodejs';
+// app/api/storage/route.ts
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -33,12 +33,61 @@ export async function GET(request: Request) {
         if (!path) {
           return new Response("Path is required for download action", { status: 400 });
         }
+        apiUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
 
-        // Return a redirect to the hardware API directly for downloads
-        // This bypasses serverless timeout limitations
-        const downloadUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
+        // For downloads, fetch and stream with chunked transfer
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes
+          
+          const downloadResponse = await fetch(apiUrl, { 
+            cache: "no-cache",
+            headers: {
+              'Accept': 'video/mp4,video/*,*/*'
+            },
+            signal: controller.signal
+          });
 
-        return Response.redirect(downloadUrl, 302);
+          clearTimeout(timeoutId);
+
+          if (!downloadResponse.ok) {
+            const errorText = await downloadResponse.text();
+            console.error('Download failed:', errorText);
+            return new Response(`Failed to download file: ${downloadResponse.statusText}`, { 
+              status: downloadResponse.status 
+            });
+          }
+
+          const contentType = downloadResponse.headers.get('content-type') || 'video/mp4';
+          const contentLength = downloadResponse.headers.get('content-length');
+          
+          // Extract filename from path
+          const fileName = path.split('/').pop() || 'download.mp4';
+          
+          // Return with proper download headers - stream the body directly
+          const headers: HeadersInit = {
+            'Content-Type': contentType,
+            'Content-Disposition': `attachment; filename="${fileName}"`,
+            'Cache-Control': 'no-cache',
+            'X-Content-Type-Options': 'nosniff',
+          };
+
+          // Add content length if available
+          if (contentLength) {
+            headers['Content-Length'] = contentLength;
+          }
+
+          // Stream the response body directly
+          return new Response(downloadResponse.body, {
+            status: 200,
+            headers,
+          });
+        } catch (error: any) {
+          if (error.name === 'AbortError') {
+            return new Response('Download timeout - file too large or connection too slow', { status: 504 });
+          }
+          throw error;
+        }
 
       default:
         return new Response("Invalid action. Use 'status', 'files', 'details', or 'download'", { status: 400 });
@@ -68,8 +117,8 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Storage API Error:', error);
-    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-      status: 500
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500 
     });
   }
 }
@@ -107,8 +156,8 @@ export async function DELETE(request: Request) {
 
   } catch (error) {
     console.error('Delete API Error:', error);
-    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-      status: 500
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500 
     });
   }
 }
@@ -157,8 +206,8 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Rename API Error:', error);
-    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-      status: 500
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
+      status: 500 
     });
   }
 }
