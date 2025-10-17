@@ -121,14 +121,30 @@ export default function StoragePage() {
         }
     };
 
-    const downloadFile = (fileName: string) => {
+    const downloadFile = async (fileName: string) => {
         try {
-            const url = `/api/storage?action=download&path=videoes/${fileName}`;
-            window.location.href = url;
-            setSuccess(`Downloading ${fileName}...`);
+            setSuccess(`Starting download for ${fileName}...`);
+            
+            // Use direct link approach - simpler and more reliable
+            const url = `/api/storage?action=download&path=videoes/${encodeURIComponent(fileName)}`;
+            
+            // Create a hidden anchor and trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            
+            // Cleanup after a short delay
+            setTimeout(() => {
+                document.body.removeChild(link);
+            }, 100);
+            
+            setSuccess(`Download started for ${fileName}`);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
-            setError('Failed to initiate download');
+            setError('Failed to start download. Please try again.');
             console.error('Download error:', err);
         }
     };
