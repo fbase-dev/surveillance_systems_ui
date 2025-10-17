@@ -406,7 +406,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
         )}
 
         {/* Radar Overlay */}
-        <Stage width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ position: "relative", zIndex: 100 }}>
+        <Stage width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ position: "relative", }}>
           <Layer>
             {/* Range Rings - Now proportional to radar range */}
             {[1, 2, 3, 4, 5].map((i) => {

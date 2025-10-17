@@ -31,52 +31,12 @@ export async function GET(request: Request) {
         if (!path) {
           return new Response("Path is required for download action", { status: 400 });
         }
-        apiUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
 
-        // For downloads, stream the response directly without buffering
-        const downloadResponse = await fetch(apiUrl, { 
-          cache: "no-cache",
-          headers: {
-            'Accept': 'video/mp4,video/*,*/*'
-          },
-          // Add signal for better timeout handling
-          signal: AbortSignal.timeout(300000) // 5 minutes timeout
-        });
+        // Return a redirect to the hardware API directly for downloads
+        // This bypasses serverless timeout limitations
+        const downloadUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
 
-        if (!downloadResponse.ok) {
-          const errorText = await downloadResponse.text();
-          console.error('Download failed:', errorText);
-          return new Response(`Failed to download file: ${downloadResponse.statusText}`, { 
-            status: downloadResponse.status 
-          });
-        }
-
-        const contentType = downloadResponse.headers.get('content-type') || 'video/mp4';
-        const contentLength = downloadResponse.headers.get('content-length');
-        
-        // Extract filename from path
-        const fileName = path.split('/').pop() || 'download.mp4';
-        
-        // Return with proper download headers - stream the body directly
-        const headers: HeadersInit = {
-          'Content-Type': contentType,
-          'Content-Disposition': `attachment; filename="${fileName}"`,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'Accept-Ranges': 'bytes',
-        };
-
-        // Add content length if available
-        if (contentLength) {
-          headers['Content-Length'] = contentLength;
-        }
-
-        // Stream the response body directly instead of buffering
-        return new Response(downloadResponse.body, {
-          status: 200,
-          headers,
-        });
+        return Response.redirect(downloadUrl, 302);
 
       default:
         return new Response("Invalid action. Use 'status', 'files', 'details', or 'download'", { status: 400 });
@@ -106,8 +66,8 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Storage API Error:', error);
-    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
-      status: 500 
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+      status: 500
     });
   }
 }
@@ -145,8 +105,8 @@ export async function DELETE(request: Request) {
 
   } catch (error) {
     console.error('Delete API Error:', error);
-    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
-      status: 500 
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+      status: 500
     });
   }
 }
@@ -195,8 +155,8 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Rename API Error:', error);
-    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, { 
-      status: 500 
+    return new Response(`Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+      status: 500
     });
   }
 }
