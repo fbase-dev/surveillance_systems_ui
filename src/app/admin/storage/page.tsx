@@ -121,32 +121,10 @@ export default function StoragePage() {
         }
     };
 
-    const downloadFile = async (fileName: string) => {
-        try {
-            setSuccess(`Starting download for ${fileName}...`);
-            
-            // Use direct link approach - simpler and more reliable
-            const url = `/api/storage?action=download&path=videoes/${encodeURIComponent(fileName)}`;
-            
-            // Create a hidden anchor and trigger download
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            
-            // Cleanup after a short delay
-            setTimeout(() => {
-                document.body.removeChild(link);
-            }, 100);
-            
-            setSuccess(`Download started for ${fileName}`);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError('Failed to start download. Please try again.');
-            console.error('Download error:', err);
-        }
+    const downloadFile = async (filePath: string) => {
+        const apiUrl = 'http://102.208.116.12:8000/api';
+        const downloadUrl = `${apiUrl}/files/download?path=videoes/${encodeURIComponent(filePath)}`;
+        window.open(downloadUrl, '_blank');
     };
 
     const confirmDelete = (fileName: string) => {
@@ -226,9 +204,9 @@ export default function StoragePage() {
                 {/* Header */}
                 <Group justify="space-between">
                     <Title order={2}>Video Storage Management</Title>
-                    <Button 
-                        leftSection={<IconRefresh size={16} />} 
-                        onClick={fetchFiles} 
+                    <Button
+                        leftSection={<IconRefresh size={16} />}
+                        onClick={fetchFiles}
                         loading={loading}
                     >
                         Refresh
@@ -429,8 +407,8 @@ export default function StoragePage() {
                         />
 
                         <Group justify="flex-end" mt="md">
-                            <Button 
-                                variant="light" 
+                            <Button
+                                variant="light"
                                 onClick={() => {
                                     setRenameModalOpen(false);
                                     setNewFileName('');

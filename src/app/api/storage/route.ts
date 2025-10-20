@@ -33,61 +33,20 @@ export async function GET(request: Request) {
         if (!path) {
           return new Response("Path is required for download action", { status: 400 });
         }
+        // Return the direct download URL for client-side handling
+        // This avoids mixed content issues on HTTPS sites
         apiUrl = `${baseUrl}/files/download?path=${encodeURIComponent(path)}`;
-
-        // For downloads, fetch and stream with chunked transfer
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 minutes
-          
-          const downloadResponse = await fetch(apiUrl, { 
-            cache: "no-cache",
-            headers: {
-              'Accept': 'video/mp4,video/*,*/*'
-            },
-            signal: controller.signal
-          });
-
-          clearTimeout(timeoutId);
-
-          if (!downloadResponse.ok) {
-            const errorText = await downloadResponse.text();
-            console.error('Download failed:', errorText);
-            return new Response(`Failed to download file: ${downloadResponse.statusText}`, { 
-              status: downloadResponse.status 
-            });
-          }
-
-          const contentType = downloadResponse.headers.get('content-type') || 'video/mp4';
-          const contentLength = downloadResponse.headers.get('content-length');
-          
-          // Extract filename from path
-          const fileName = path.split('/').pop() || 'download.mp4';
-          
-          // Return with proper download headers - stream the body directly
-          const headers: HeadersInit = {
-            'Content-Type': contentType,
-            'Content-Disposition': `attachment; filename="${fileName}"`,
-            'Cache-Control': 'no-cache',
-            'X-Content-Type-Options': 'nosniff',
-          };
-
-          // Add content length if available
-          if (contentLength) {
-            headers['Content-Length'] = contentLength;
-          }
-
-          // Stream the response body directly
-          return new Response(downloadResponse.body, {
-            status: 200,
-            headers,
-          });
-        } catch (error: any) {
-          if (error.name === 'AbortError') {
-            return new Response('Download timeout - file too large or connection too slow', { status: 504 });
-          }
-          throw error;
-        }
+        
+        return new Response(JSON.stringify({ 
+          download_url: apiUrl,
+          filename: path.split('/').pop() || 'download.mp4'
+        }), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+        });
 
       default:
         return new Response("Invalid action. Use 'status', 'files', 'details', or 'download'", { status: 400 });
