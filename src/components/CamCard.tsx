@@ -16,28 +16,30 @@ export default function CamCard({
 }: CamCardProps) {
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState<1 | 2>(1);
-  const lastSuccessRef = useRef<number>(Date.now());
   const img1Ref = useRef<HTMLImageElement>(null);
   const img2Ref = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (!streamUrl) return;
 
+    let isMounted = true;
+
     const updateImage = () => {
       const nextRef = activeImg === 1 ? img2Ref.current : img1Ref.current;
-      const nextSrc = `${streamUrl}?t=${Date.now()}`;
       if (!nextRef) return;
+
+   
+      const nextSrc = `${streamUrl}?_=${Date.now()}`;
 
       const tempImg = new Image();
       tempImg.src = nextSrc;
 
       tempImg.onload = () => {
-        lastSuccessRef.current = Date.now();
+        if (!isMounted) return;
 
-        if (nextRef) {
-          nextRef.src = nextSrc;
-          nextRef.style.opacity = "1";
-        }
+       
+        nextRef.src = nextSrc;
+        nextRef.style.opacity = "1";
 
         const prevRef = activeImg === 1 ? img1Ref.current : img2Ref.current;
         if (prevRef) prevRef.style.opacity = "0";
@@ -46,12 +48,19 @@ export default function CamCard({
         setLoading(false);
       };
 
-
+      tempImg.onerror = () => {
+        
+        console.warn(`${title} — failed to load frame, retrying...`);
+      };
     };
 
     updateImage();
-    const interval = setInterval(updateImage, 1000);
-    return () => clearInterval(interval);
+    const interval = setInterval(updateImage, 1000); 
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [streamUrl, activeImg]);
 
   return (
@@ -66,6 +75,7 @@ export default function CamCard({
         background: "#000",
       }}
     >
+      {/* Camera title */}
       <Title
         order={3}
         pos="absolute"
@@ -81,6 +91,7 @@ export default function CamCard({
         {title}
       </Title>
 
+      {/* Loader while first frame is loading */}
       {loading && (
         <Center
           h="100%"
@@ -94,9 +105,10 @@ export default function CamCard({
         </Center>
       )}
 
+      {/* Two alternating <img> tags for smooth transitions */}
       <img
         ref={img1Ref}
-        alt=""
+        alt={`${title} feed`}
         style={{
           position: "absolute",
           inset: 0,
@@ -106,13 +118,12 @@ export default function CamCard({
           transition: "opacity 0.4s ease-in-out",
           opacity: 1,
           zIndex: 1,
-          display: "block",
         }}
       />
 
       <img
         ref={img2Ref}
-        alt=""
+        alt={`${title} feed`}
         style={{
           position: "absolute",
           inset: 0,
@@ -122,7 +133,6 @@ export default function CamCard({
           transition: "opacity 0.4s ease-in-out",
           opacity: 0,
           zIndex: 1,
-          display: "block",
         }}
       />
     </Card>
