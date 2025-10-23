@@ -15,8 +15,8 @@ export default function CamCard({
   onClick,
 }: CamCardProps) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [activeImg, setActiveImg] = useState<1 | 2>(1);
+  const lastSuccessRef = useRef<number>(Date.now());
   const img1Ref = useRef<HTMLImageElement>(null);
   const img2Ref = useRef<HTMLImageElement>(null);
 
@@ -32,30 +32,25 @@ export default function CamCard({
       tempImg.src = nextSrc;
 
       tempImg.onload = () => {
+        lastSuccessRef.current = Date.now();
+
         if (nextRef) {
           nextRef.src = nextSrc;
-          nextRef.style.opacity = "1"; // fade in
+          nextRef.style.opacity = "1";
         }
 
-        // Fade out the previous image
         const prevRef = activeImg === 1 ? img1Ref.current : img2Ref.current;
         if (prevRef) prevRef.style.opacity = "0";
 
         setActiveImg(activeImg === 1 ? 2 : 1);
         setLoading(false);
-        setError(false);
       };
 
-      tempImg.onerror = () => {
-        console.warn(`${title} stream error — retrying in 3 sec`);
-        setError(true);
-        setTimeout(() => setError(false), 3000);
-      };
+
     };
 
     updateImage();
-    const interval = setInterval(updateImage, 1000); // reload every second
-
+    const interval = setInterval(updateImage, 1000);
     return () => clearInterval(interval);
   }, [streamUrl, activeImg]);
 
@@ -65,9 +60,12 @@ export default function CamCard({
       p={0}
       pos="relative"
       onClick={onClick}
-      style={{ cursor: onClick ? "pointer" : "default", overflow: "hidden" }}
+      style={{
+        cursor: onClick ? "pointer" : "default",
+        overflow: "hidden",
+        background: "#000",
+      }}
     >
-      {/* Overlay title */}
       <Title
         order={3}
         pos="absolute"
@@ -83,8 +81,7 @@ export default function CamCard({
         {title}
       </Title>
 
-      {/* Loader */}
-      {loading && !error && (
+      {loading && (
         <Center
           h="100%"
           w="100%"
@@ -97,26 +94,9 @@ export default function CamCard({
         </Center>
       )}
 
-      {/* Error */}
-      {error && (
-        <Center
-          h="100%"
-          w="100%"
-          pos="absolute"
-          top={0}
-          left={0}
-          style={{ backgroundColor: "#00000088", zIndex: 2 }}
-        >
-          <Title order={4} c="white">
-            Stream Error — Retrying…
-          </Title>
-        </Center>
-      )}
-
-      {/* Crossfade image layers */}
       <img
         ref={img1Ref}
-        alt="Live Stream 1"
+        alt=""
         style={{
           position: "absolute",
           inset: 0,
@@ -126,12 +106,13 @@ export default function CamCard({
           transition: "opacity 0.4s ease-in-out",
           opacity: 1,
           zIndex: 1,
+          display: "block",
         }}
       />
 
       <img
         ref={img2Ref}
-        alt="Live Stream 2"
+        alt=""
         style={{
           position: "absolute",
           inset: 0,
@@ -141,6 +122,7 @@ export default function CamCard({
           transition: "opacity 0.4s ease-in-out",
           opacity: 0,
           zIndex: 1,
+          display: "block",
         }}
       />
     </Card>
