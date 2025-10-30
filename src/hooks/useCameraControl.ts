@@ -6,6 +6,11 @@ import {
   resumeCamera,
   sendCameraControl,
   setCameraPosition,
+  moveUp,
+  moveDown,
+  moveLeft,
+  moveRight,
+  recalibrateCamera,
 } from "../app/lib/services/cameraService";
 import { getCameraStatus } from "@/app/lib/services/aisService";
 import { useDisclosure } from "@mantine/hooks";
@@ -13,40 +18,40 @@ import { isInRange, useForm } from '@mantine/form';
 import { CameraPosition } from "@/types/CameraPosition";
 
 export const useCameraControl = () => {
-  const [position, setPosition] = useState<CameraPosition>({ pan: 0, tilt: 0}); // store camera position
-  const [status, setStatus] = useState<string>(""); //store camera status
-  const [modalOpened, modalHandler] = useDisclosure(false); // manage position form modal
+  const [position, setPosition] = useState<CameraPosition>({ pan: 0, tilt: 0, zoom: 0 });
+  const [status, setStatus] = useState<string>("");
+  const [modalOpened, modalHandler] = useDisclosure(false);
   const [loading, setLoading] = useState<boolean>(false);
   
   const positionForm = useForm<CameraPosition>({
     mode: "uncontrolled",
     validateInputOnChange: true,
     validateInputOnBlur: true,
-    initialValues:{
+    initialValues: {
       pan: position.pan,
       tilt: position.tilt,
-      // zoom: position.zoom
+      zoom: position.zoom || 0
     },
     validate: {
-        pan: isInRange({min:0, max:90}, "Pan must be between 0 and 90"),
-        tilt: isInRange({min:0, max:90}, "Tilt must be between 0 and 90"),
+      pan: isInRange({ min: 0, max: 90 }, "Pan must be between 0 and 90"),
+      tilt: isInRange({ min: 0, max: 90 }, "Tilt must be between 0 and 90"),
+      zoom: isInRange({ min: 0, max: 90 }, "Zoom must be between 0 and 90"),
     },
-  })
+  });
 
-  const submitPositionForm = async(values: typeof positionForm.values)=>{
+  const submitPositionForm = async (values: typeof positionForm.values) => {
     setLoading(true);
-    try{
+    try {
       await setCameraPosition(values);
       positionForm.reset();
-      
-    } catch (error){
-      console.error("Failed to send camera position:", error)
-    }finally{
-      await fetchCachePosition();  //update position
-      await fetchStatus(); // update status
+    } catch (error) {
+      console.error("Failed to send camera position:", error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  };
 
   // Fetch the cache position of the camera
   const fetchCachePosition = async () => {
@@ -59,24 +64,67 @@ export const useCameraControl = () => {
     }
   };
 
-   // Fetch the live position of the camera
-  //  const fetchLivePosition = async () => {
-  //   try {
-  //     const response = await getLiveTrackingPosition(); 
-  //     setPosition(response.data);
-  //   } catch (error) {
-  //     console.error("Error fetching live position", error);
-  //   }
-  // };
-
   // Control the camera (send commands like pan, tilt, zoom)
-  const control = async (command:string)=>{
+  const control = async (command: string) => {
     setLoading(true);
-    try{
-      await(sendCameraControl(command));
-    }catch (error) {
-      console.log(error)
-    }finally{
+    try {
+      await sendCameraControl(command);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  };
+
+  // Movement controls
+  const up = async () => {
+    setLoading(true);
+    try {
+      await moveUp();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  };
+
+  const down = async () => {
+    setLoading(true);
+    try {
+      await moveDown();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  };
+
+  const left = async () => {
+    setLoading(true);
+    try {
+      await moveLeft();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  };
+
+  const right = async () => {
+    setLoading(true);
+    try {
+      await moveRight();
+    } catch (error) {
+      console.log(error);
+    } finally {
       await fetchCachePosition();
       await fetchStatus();
       setLoading(false);
@@ -85,48 +133,60 @@ export const useCameraControl = () => {
 
   const pause = async () => {
     setLoading(true);
-    try{
+    try {
       await pauseCamera();
-    }catch (error) {
-      console.log (error)
-    }finally {
+    } catch (error) {
+      console.log(error);
+    } finally {
       await fetchCachePosition();
       await fetchStatus();
-      setLoading(true);
+      setLoading(false);
     }
   };
 
   const resume = async () => {
     setLoading(true);
-    try{
+    try {
       await resumeCamera();
-    }catch (error) {
-      console.log (error)
-    }finally {
+    } catch (error) {
+      console.log(error);
+    } finally {
       await fetchCachePosition();
       await fetchStatus();
-      setLoading(true);
+      setLoading(false);
     }
   };
 
   const reset = async () => {
     setLoading(true);
-    try{
+    try {
       await resetCamera();
-    }catch (error) {
-      console.log (error)
-    }finally {
+    } catch (error) {
+      console.log(error);
+    } finally {
       await fetchCachePosition();
       await fetchStatus();
       setLoading(false);
     }
-  }
+  };
 
+  const recalibrate = async () => {
+    setLoading(true);
+    try {
+      await recalibrateCamera();
+    } catch (error) {
+      console.log(error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  };
 
-  // Fetch the stastus of the camera
+  // Fetch the status of the camera
   const fetchStatus = async () => {
     try {
-      const response = await getCameraStatus(); 
+      const response = await getCameraStatus();
       setStatus(response.data.status);
     } catch (error) {
       console.error("Error retrieving camera status", error);
@@ -150,8 +210,12 @@ export const useCameraControl = () => {
     resume,
     control,
     reset,
+    recalibrate,
+    up,
+    down,
+    left,
+    right,
     fetchCachePosition,
-    // fetchLivePosition,
     submitPositionForm
   };
 };
