@@ -60,7 +60,7 @@ export default function RadialControlMenu() {
         margin: "0 auto",
       }}
     >
-    
+
       <LoadingOverlay
         visible={loading}
         zIndex={1000}
@@ -71,7 +71,7 @@ export default function RadialControlMenu() {
         }}
       />
 
-   
+
       <Tooltip label="Move Up" position="top" withArrow>
         <ActionIcon
           variant="transparent"
@@ -90,7 +90,7 @@ export default function RadialControlMenu() {
         </ActionIcon>
       </Tooltip>
 
-  
+
       <Tooltip label="Move Down" position="bottom" withArrow>
         <ActionIcon
           variant="transparent"
@@ -109,7 +109,7 @@ export default function RadialControlMenu() {
         </ActionIcon>
       </Tooltip>
 
-    
+
       <Tooltip label="Move Left" position="left" withArrow>
         <ActionIcon
           variant="transparent"
@@ -165,7 +165,7 @@ export default function RadialControlMenu() {
         </ActionIcon>
       </Tooltip>
 
-   
+
       <Tooltip label="Zoom Out" position="bottom-end" withArrow>
         <ActionIcon
           variant="transparent"
@@ -176,7 +176,7 @@ export default function RadialControlMenu() {
             right: 35,
           }}
           size="md"
-          disabled={isDisabled || zoom <= 0}
+
           onClick={handleZoomOut}
         >
           <IconZoomOut size={22} />
@@ -201,9 +201,10 @@ export default function RadialControlMenu() {
         onClick={status === "paused" ? resume : pause}
       >
         {status === "paused" ? (
-          <IconPlayerPlay size={36} />
-        ) : (
           <IconPlayerStop size={36} />
+        ) : (
+
+          <IconPlayerPlay size={36} />
         )}
       </ActionIcon>
     </div>
