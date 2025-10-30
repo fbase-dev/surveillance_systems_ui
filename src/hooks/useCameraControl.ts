@@ -10,6 +10,7 @@ import {
   moveDown,
   moveLeft,
   moveRight,
+   goToPosition,
   recalibrateCamera,
 } from "../app/lib/services/cameraService";
 import { getCameraStatus } from "@/app/lib/services/aisService";
@@ -192,6 +193,19 @@ export const useCameraControl = () => {
       console.error("Error retrieving camera status", error);
     }
   };
+  const goTo = async (pan: number, tilt: number) => {
+  setLoading(true);
+  try {
+    await goToPosition(pan, tilt);
+  } catch (error) {
+    console.error("Failed to go to position:", error);
+  } finally {
+    await fetchCachePosition();
+    await fetchStatus();
+    setLoading(false);
+  }
+};
+
 
   // Fetch camera position and status on component mount
   useEffect(() => {
@@ -215,6 +229,7 @@ export const useCameraControl = () => {
     down,
     left,
     right,
+    goTo,
     fetchCachePosition,
     submitPositionForm
   };

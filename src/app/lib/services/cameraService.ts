@@ -39,3 +39,9 @@ export const setCameraPosition = async (params: CameraPosition) => {
   await sendCommand(`tilt:${params.tilt}`);
   if (params.zoom !== undefined) await sendCommand(`zoom:${params.zoom}`);
 };
+
+
+export const goToPosition = async (pan: number, tilt: number) => {
+  const cmd = `${pan},${tilt}`; 
+  return sendCommand(cmd);      
+};
