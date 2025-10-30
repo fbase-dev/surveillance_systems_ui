@@ -8,9 +8,21 @@ import {
   Stack,
   Title,
 } from "@mantine/core";
+import { useEffect } from "react";
 
 export default function PositionForm() {
-  const { positionForm, submitPositionForm, loading } = useCamera();
+  const { positionForm, submitPositionForm, loading, position } = useCamera();
+
+
+  useEffect(() => {
+    if (position) {
+      positionForm.setValues({
+        pan: position.pan ?? 0,
+        tilt: position.tilt ?? 0,
+      });
+    }
+  }, [position?.pan, position?.tilt]);
+
   return (
     <Card w={400}>
       <Title order={5}>Manual Control</Title>
@@ -23,8 +35,10 @@ export default function PositionForm() {
             placeholder="0.00°"
             min={0}
             max={90}
-            key={positionForm.key("pan")}
-            {...positionForm.getInputProps("pan")}
+            decimalScale={2}
+            step={0.1}
+            value={positionForm.values.pan}
+            onChange={(value) => positionForm.setFieldValue('pan', typeof value === 'number' ? value : 0)}
           />
           <NumberInput
             withAsterisk
@@ -32,16 +46,11 @@ export default function PositionForm() {
             placeholder="0.00°"
             min={0}
             max={50}
-            key={positionForm.key("tilt")}
-            {...positionForm.getInputProps("tilt")}
+            decimalScale={2}
+            step={0.1}
+            value={positionForm.values.tilt}
+            onChange={(value) => positionForm.setFieldValue('tilt', typeof value === 'number' ? value : 0)}
           />
-          {/* <NumberInput
-            withAsterisk
-            label="Zoom"
-            placeholder="0.00"
-            key={positionForm.key("zoom")}
-            {...positionForm.getInputProps("zoom")}
-          /> */}
         </Stack>
 
         <Group justify="flex-end" mt="md">
