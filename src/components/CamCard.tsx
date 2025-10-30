@@ -55,7 +55,7 @@ export default function CamCard({
     };
 
     updateImage();
-    const interval = setInterval(updateImage, 1000); 
+    const interval = setInterval(updateImage, 5000); 
 
     return () => {
       isMounted = false;
