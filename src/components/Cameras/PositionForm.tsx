@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 
 export default function PositionForm() {
   const { positionForm, submitPositionForm, loading, position, goTo } = useCamera();
-  const [goToValue, setGoToValue] = useState<string>(""); // For "40,50"
+  const [goToValue, setGoToValue] = useState<string>(""); 
 
   useEffect(() => {
     if (position) {

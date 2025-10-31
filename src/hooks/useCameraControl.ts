@@ -10,12 +10,12 @@ import {
   moveDown,
   moveLeft,
   moveRight,
-   goToPosition,
+  goToPosition,
   recalibrateCamera,
 } from "../app/lib/services/cameraService";
 import { getCameraStatus } from "@/app/lib/services/aisService";
 import { useDisclosure } from "@mantine/hooks";
-import { isInRange, useForm } from '@mantine/form';
+import { isInRange, useForm } from "@mantine/form";
 import { CameraPosition } from "@/types/CameraPosition";
 
 export const useCameraControl = () => {
@@ -23,7 +23,7 @@ export const useCameraControl = () => {
   const [status, setStatus] = useState<string>("");
   const [modalOpened, modalHandler] = useDisclosure(false);
   const [loading, setLoading] = useState<boolean>(false);
-  
+
   const positionForm = useForm<CameraPosition>({
     mode: "uncontrolled",
     validateInputOnChange: true,
@@ -31,7 +31,7 @@ export const useCameraControl = () => {
     initialValues: {
       pan: position.pan,
       tilt: position.tilt,
-      zoom: position.zoom || 0
+      zoom: position.zoom || 0,
     },
     validate: {
       pan: isInRange({ min: 0, max: 90 }, "Pan must be between 0 and 90"),
@@ -43,7 +43,8 @@ export const useCameraControl = () => {
   const submitPositionForm = async (values: typeof positionForm.values) => {
     setLoading(true);
     try {
-      await setCameraPosition(values);
+      // ✅ Pass current position for comparison
+      await setCameraPosition(values, position);
       positionForm.reset();
     } catch (error) {
       console.error("Failed to send camera position:", error);
@@ -54,7 +55,6 @@ export const useCameraControl = () => {
     }
   };
 
-  // Fetch the cache position of the camera
   const fetchCachePosition = async () => {
     try {
       const response = await getCameraPosition();
@@ -65,7 +65,6 @@ export const useCameraControl = () => {
     }
   };
 
-  // Control the camera (send commands like pan, tilt, zoom)
   const control = async (command: string) => {
     setLoading(true);
     try {
@@ -79,11 +78,10 @@ export const useCameraControl = () => {
     }
   };
 
-  // Movement controls
-  const up = async () => {
+  const move = async (fn: () => Promise<any>) => {
     setLoading(true);
     try {
-      await moveUp();
+      await fn();
     } catch (error) {
       console.log(error);
     } finally {
@@ -93,98 +91,15 @@ export const useCameraControl = () => {
     }
   };
 
-  const down = async () => {
-    setLoading(true);
-    try {
-      await moveDown();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
+  const up = () => move(moveUp);
+  const down = () => move(moveDown);
+  const left = () => move(moveLeft);
+  const right = () => move(moveRight);
+  const pause = () => move(pauseCamera);
+  const resume = () => move(resumeCamera);
+  const reset = () => move(resetCamera);
+  const recalibrate = () => move(recalibrateCamera);
 
-  const left = async () => {
-    setLoading(true);
-    try {
-      await moveLeft();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
-
-  const right = async () => {
-    setLoading(true);
-    try {
-      await moveRight();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
-
-  const pause = async () => {
-    setLoading(true);
-    try {
-      await pauseCamera();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
-
-  const resume = async () => {
-    setLoading(true);
-    try {
-      await resumeCamera();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
-
-  const reset = async () => {
-    setLoading(true);
-    try {
-      await resetCamera();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
-
-  const recalibrate = async () => {
-    setLoading(true);
-    try {
-      await recalibrateCamera();
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await fetchCachePosition();
-      await fetchStatus();
-      setLoading(false);
-    }
-  };
-
-  // Fetch the status of the camera
   const fetchStatus = async () => {
     try {
       const response = await getCameraStatus();
@@ -193,21 +108,20 @@ export const useCameraControl = () => {
       console.error("Error retrieving camera status", error);
     }
   };
+
   const goTo = async (pan: number, tilt: number) => {
-  setLoading(true);
-  try {
-    await goToPosition(pan, tilt);
-  } catch (error) {
-    console.error("Failed to go to position:", error);
-  } finally {
-    await fetchCachePosition();
-    await fetchStatus();
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      await goToPosition(pan, tilt);
+    } catch (error) {
+      console.error("Failed to go to position:", error);
+    } finally {
+      await fetchCachePosition();
+      await fetchStatus();
+      setLoading(false);
+    }
+  };
 
-
-  // Fetch camera position and status on component mount
   useEffect(() => {
     fetchCachePosition();
     fetchStatus();
@@ -231,6 +145,6 @@ export const useCameraControl = () => {
     right,
     goTo,
     fetchCachePosition,
-    submitPositionForm
+    submitPositionForm,
   };
 };
