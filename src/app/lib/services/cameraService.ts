@@ -22,7 +22,7 @@ export const moveDown = () => sendCommand("down");
 export const moveLeft = () => sendCommand("left");
 export const moveRight = () => sendCommand("right");
 
-// Pan/Tilt/Zoom
+// Pan/Tilt/Zoom commands
 export const panCamera = (angle: number) => sendCommand(`pan:${angle}`);
 export const tiltCamera = (angle: number) => sendCommand(`tilt:${angle}`);
 export const zoomCamera = (level: number) => sendCommand(`zoom:${level}`);
@@ -33,15 +33,28 @@ export const resumeCamera = () => sendCommand("resume");
 export const resetCamera = () => sendCommand("reset");
 export const recalibrateCamera = () => sendCommand("recalibrate");
 
-// Combined positioning
-export const setCameraPosition = async (params: CameraPosition) => {
-  await sendCommand(`pan:${params.pan}`);
-  await sendCommand(`tilt:${params.tilt}`);
-  if (params.zoom !== undefined) await sendCommand(`zoom:${params.zoom}`);
+
+export const setCameraPosition = async (params: CameraPosition, current?: CameraPosition) => {
+  const safeCurrent = {
+    pan: current?.pan ?? 0,
+    tilt: current?.tilt ?? 0,
+    zoom: current?.zoom ?? 0,
+  };
+
+  const commands: string[] = [];
+
+  if (params.pan !== safeCurrent.pan) commands.push(`pan:${params.pan}`);
+  if (params.tilt !== safeCurrent.tilt) commands.push(`tilt:${params.tilt}`);
+  if (params.zoom !== undefined && params.zoom !== safeCurrent.zoom)
+    commands.push(`zoom:${params.zoom}`);
+
+  for (const cmd of commands) {
+    await sendCommand(cmd);
+  }
 };
 
 
 export const goToPosition = async (pan: number, tilt: number) => {
-  const cmd = `${pan},${tilt}`; 
-  return sendCommand(cmd);      
+  const cmd = `${pan},${tilt}`;
+  return sendCommand(cmd);
 };
