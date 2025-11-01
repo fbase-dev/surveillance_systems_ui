@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   getCameraPosition,
   pauseCamera,
@@ -43,7 +43,6 @@ export const useCameraControl = () => {
   const submitPositionForm = async (values: typeof positionForm.values) => {
     setLoading(true);
     try {
-      // ✅ Pass current position for comparison
       await setCameraPosition(values, position);
       positionForm.reset();
     } catch (error) {
@@ -55,7 +54,7 @@ export const useCameraControl = () => {
     }
   };
 
-  const fetchCachePosition = async () => {
+  const fetchCachePosition = useCallback(async () => {
     try {
       const response = await getCameraPosition();
       setPosition(response.data);
@@ -63,7 +62,16 @@ export const useCameraControl = () => {
     } catch (error) {
       console.error("Error fetching cache position", error);
     }
-  };
+  }, []);
+
+  const fetchStatus = useCallback(async () => {
+    try {
+      const response = await getCameraStatus();
+      setStatus(response.data.status);
+    } catch (error) {
+      console.error("Error retrieving camera status", error);
+    }
+  }, []);
 
   const control = async (command: string) => {
     setLoading(true);
@@ -100,15 +108,6 @@ export const useCameraControl = () => {
   const reset = () => move(resetCamera);
   const recalibrate = () => move(recalibrateCamera);
 
-  const fetchStatus = async () => {
-    try {
-      const response = await getCameraStatus();
-      setStatus(response.data.status);
-    } catch (error) {
-      console.error("Error retrieving camera status", error);
-    }
-  };
-
   const goTo = async (pan: number, tilt: number) => {
     setLoading(true);
     try {
@@ -122,10 +121,21 @@ export const useCameraControl = () => {
     }
   };
 
+  // Initial fetch on mount
   useEffect(() => {
     fetchCachePosition();
     fetchStatus();
-  }, []);
+  }, [fetchCachePosition, fetchStatus]);
+
+  // Poll for status and position every 2 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchStatus();
+      fetchCachePosition();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [fetchStatus, fetchCachePosition]);
 
   return {
     position,
