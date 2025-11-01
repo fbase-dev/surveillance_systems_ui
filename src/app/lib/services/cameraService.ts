@@ -1,11 +1,19 @@
 import axios from "axios";
 import { CameraPosition } from "@/types/CameraPosition";
 
-const API_BASE = "/api/camera";
+const API_BASE = "/api/control";
+const ACTION = "/api/action";
 
 // Generic helper for commands
 const sendCommand = async (cmd: string) => {
-  return axios.post(`${API_BASE}?path=/camera`, { cmd }, {
+  return axios.post(`${API_BASE}?path=/control`, { cmd }, {
+    headers: { "Content-Type": "application/json" },
+  });
+};
+
+// Helper for pause/resume actions
+const sendAction = async (cmd: string) => {
+  return axios.post(`${ACTION}?path=/action`, { action: cmd }, {
     headers: { "Content-Type": "application/json" },
   });
 };
@@ -28,11 +36,13 @@ export const tiltCamera = (angle: number) => sendCommand(`tilt:${angle}`);
 export const zoomCamera = (level: number) => sendCommand(`zoom:${level}`);
 
 // State controls
-export const pauseCamera = () => sendCommand("pause");
-export const resumeCamera = () => sendCommand("resume");
+export const pauseCamera = () => sendAction("pause");
+export const resumeCamera = () => sendAction("resume");
 export const resetCamera = () => sendCommand("reset");
 export const recalibrateCamera = () => sendCommand("recalibrate");
 
+
+export const getCameraStatus = () => axios.get('/api/camera');
 
 export const setCameraPosition = async (params: CameraPosition, current?: CameraPosition) => {
   const safeCurrent = {
@@ -52,7 +62,6 @@ export const setCameraPosition = async (params: CameraPosition, current?: Camera
     await sendCommand(cmd);
   }
 };
-
 
 export const goToPosition = async (pan: number, tilt: number) => {
   const cmd = `${pan},${tilt}`;

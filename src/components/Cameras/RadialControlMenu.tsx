@@ -11,7 +11,7 @@ import {
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
-  IconPlayerStop,
+  IconPlayerPause,
   IconPlayerPlay,
   IconZoomIn,
   IconZoomOut,
@@ -43,7 +43,7 @@ export default function RadialControlMenu() {
     control(`zoom:${newZoom}`);
   };
 
-  const isDisabled = loading || status === "active";
+  const isDisabled = loading || status === "paused";
 
   return (
     <div
@@ -176,7 +176,7 @@ export default function RadialControlMenu() {
             right: 35,
           }}
           size="md"
-
+          disabled={isDisabled || zoom <= 0}
           onClick={handleZoomOut}
         >
           <IconZoomOut size={22} />
@@ -201,10 +201,9 @@ export default function RadialControlMenu() {
         onClick={status === "paused" ? resume : pause}
       >
         {status === "paused" ? (
-          <IconPlayerStop size={36} />
-        ) : (
-
           <IconPlayerPlay size={36} />
+        ) : (
+          <IconPlayerPause size={36} />
         )}
       </ActionIcon>
     </div>
