@@ -1,4 +1,4 @@
-export async function GET(request: Request) {
+export async function GET() {
   const statusUrl = 'https://camera-server-cloud-run-183968704272.us-central1.run.app/status';
 
   try {
