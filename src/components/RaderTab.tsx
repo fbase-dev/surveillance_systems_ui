@@ -384,7 +384,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
       {/* Radar Display with Live Map Background */}
       <div style={{ position: "relative", width: CANVAS_SIZE, margin: "auto" }}>
         {/* Live Google Map Background */}
-        {isLoaded && hasCenter && (
+        {isLoaded && (
           <div style={{
             position: "absolute",
             width: CANVAS_SIZE,
@@ -394,7 +394,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
           }}>
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "100%" }}
-              center={{ lat: centerLat, lng: centerLon }}
+              center={{ lat: centerLat || 0, lng: centerLon || 0 }}
               zoom={zoom}
               options={{
                 disableDefaultUI: true,
@@ -404,6 +404,7 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
             />
           </div>
         )}
+        
 
         {/* Radar Overlay */}
         <Stage width={CANVAS_SIZE} height={CANVAS_SIZE} style={{ position: "relative", }}>
@@ -669,3 +670,4 @@ const RadarDisplay: React.FC<RadarDisplayProps> = ({ onTargetSelect, onOwnVessel
 };
 
 export default RadarDisplay;
+
